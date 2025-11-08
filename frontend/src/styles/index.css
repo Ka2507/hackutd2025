@@ -4,53 +4,70 @@
 
 @layer base {
   body {
-    @apply bg-charcoal text-white font-sans antialiased;
+    @apply bg-dark text-gray-100 font-sans antialiased;
+    background-image: radial-gradient(circle at 20% 50%, rgba(118, 185, 0, 0.03) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, rgba(0, 71, 187, 0.03) 0%, transparent 50%);
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+    @apply font-display tracking-tight;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+    @apply px-6 py-2.5 rounded-lg font-medium transition-all duration-300 
+           flex items-center justify-center gap-2;
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-neon-cyan to-neon-orange text-charcoal hover:shadow-lg hover:scale-105;
+    @apply bg-nvidia-green text-dark hover:bg-nvidia-green-light 
+           shadow-lg shadow-nvidia-green/20 hover:shadow-nvidia-green/40
+           hover:scale-105 active:scale-95;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 text-white hover:bg-gray-300;
+    @apply bg-pnc-blue text-white hover:bg-pnc-blue-light 
+           shadow-lg shadow-pnc-blue/20 hover:shadow-pnc-blue/40
+           hover:scale-105 active:scale-95;
   }
 
   .btn-ghost {
-    @apply bg-transparent border border-gray-300 text-white hover:bg-gray-200;
+    @apply bg-transparent border border-dark-border text-gray-300 
+           hover:bg-dark-card hover:border-nvidia-green/50;
   }
 
   .card {
-    @apply bg-charcoal-light border border-gray-200 rounded-lg p-6 transition-all duration-200;
+    @apply bg-dark-card border border-dark-border rounded-xl p-6 
+           transition-all duration-300 backdrop-blur-sm;
   }
 
   .card-hover {
-    @apply hover:border-neon-cyan hover:shadow-lg hover:shadow-neon-cyan/20;
+    @apply hover:border-nvidia-green/50 hover:shadow-xl 
+           hover:shadow-nvidia-green/10 hover:-translate-y-1;
+  }
+
+  .card-interactive {
+    @apply cursor-pointer hover:scale-[1.02] active:scale-[0.98];
   }
 
   .input {
-    @apply bg-gray-200 border border-gray-300 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan;
+    @apply bg-dark-lighter border border-dark-border rounded-lg px-4 py-2.5 
+           text-gray-100 placeholder-gray-500 
+           focus:outline-none focus:border-nvidia-green focus:ring-2 
+           focus:ring-nvidia-green/20 transition-all duration-200;
   }
 
   .badge {
-    @apply px-3 py-1 rounded-full text-xs font-medium;
+    @apply px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
   }
 
   .badge-success {
-    @apply bg-green-500/20 text-green-400 border border-green-500/30;
+    @apply bg-nvidia-green/20 text-nvidia-green-light border border-nvidia-green/30;
   }
 
   .badge-warning {
-    @apply bg-yellow-500/20 text-yellow-400 border border-yellow-500/30;
+    @apply bg-pnc-orange/20 text-pnc-orange border border-pnc-orange/30;
   }
 
   .badge-error {
@@ -58,15 +75,36 @@
   }
 
   .badge-info {
-    @apply bg-blue-500/20 text-blue-400 border border-blue-500/30;
-  }
-
-  .glow-border {
-    @apply border-2 border-neon-cyan shadow-lg shadow-neon-cyan/50;
+    @apply bg-pnc-blue/20 text-pnc-blue-light border border-pnc-blue/30;
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-neon-cyan to-neon-orange bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-nvidia-green to-pnc-blue bg-clip-text text-transparent;
+  }
+
+  .gradient-border {
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 0.75rem;
+    padding: 1px;
+    background: linear-gradient(135deg, #76B900, #0047BB);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .section-header {
+    @apply text-3xl md:text-4xl font-display font-bold mb-3 gradient-text;
+  }
+
+  .section-subtitle {
+    @apply text-lg text-gray-400 mb-8;
   }
 }
 
@@ -79,19 +117,32 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-}
 
-/* Custom animations */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
+  .text-balance {
+    text-wrap: balance;
   }
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-dark-lighter;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-dark-border rounded-full hover:bg-nvidia-green/50;
+}
+
+/* Selection styling */
+::selection {
+  @apply bg-nvidia-green/30 text-white;
+}
+
+::-moz-selection {
+  @apply bg-nvidia-green/30 text-white;
 }
 
