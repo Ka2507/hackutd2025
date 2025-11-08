@@ -14,8 +14,8 @@ class JiraAPI:
     """Mock Jira API integration"""
     
     def __init__(self):
-        self.base_url = settings.JIRA_BASE_URL or "https://your-domain.atlassian.net"
-        self.api_token = settings.JIRA_API_TOKEN
+        self.base_url = settings.jira_base_url or "https://your-domain.atlassian.net"
+        self.api_token = settings.jira_api_token
         self.connected = bool(self.api_token)
         
         if not self.connected:
