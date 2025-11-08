@@ -12,7 +12,7 @@ export const Home: React.FC = () => {
     {
       icon: Cpu,
       title: 'Multi-Agent AI',
-      description: '9 specialized agents with adaptive workflows powered by NVIDIA Nemotron',
+      description: '7 specialized agents powered by NVIDIA Nemotron for strategic reasoning',
     },
     {
       icon: Zap,
@@ -39,8 +39,8 @@ export const Home: React.FC = () => {
     { name: 'Go-to-Market', description: 'Launch strategy & pricing' },
     { name: 'Automation', description: 'Workflow automation & reporting' },
     { name: 'Regulation', description: 'Compliance & risk assessment' },
-    { name: 'Risk Assessment', description: 'Proactive risk prediction & bottleneck detection' },
-    { name: 'Prioritization', description: 'Smart multi-factor feature prioritization' },
+    { name: 'Prioritization', description: 'RICE framework & feature prioritization' },
+    { name: 'Risk Assessment', description: 'Technical & business risk analysis' },
   ];
 
   return (
@@ -161,7 +161,7 @@ export const Home: React.FC = () => {
             className="text-center mb-16"
           >
             <h2 className="section-header">
-              Nine Specialized Agents
+              Seven Specialized Agents
             </h2>
             <p className="section-subtitle">
               Each agent brings unique expertise to your product workflow
