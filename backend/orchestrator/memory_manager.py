@@ -33,7 +33,7 @@ class MemoryManager:
             dimension: Dimension of embedding vectors (384 for all-MiniLM-L6-v2)
         """
         self.dimension = dimension
-        self.use_faiss = settings.VECTOR_STORE_TYPE == "faiss" and FAISS_AVAILABLE
+        self.use_faiss = settings.vector_store_type == "faiss" and FAISS_AVAILABLE
         self.memories = []  # List of memory dictionaries
         
         if self.use_faiss:
