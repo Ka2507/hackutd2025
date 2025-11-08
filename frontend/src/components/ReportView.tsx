@@ -3,13 +3,13 @@
  */
 import { motion } from 'framer-motion';
 import { TrendingUp, Clock, Zap, Target } from 'lucide-react';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ReportViewProps {
   data?: any;
 }
 
-export const ReportView: React.FC<ReportViewProps> = ({ data }) => {
+export const ReportView: React.FC<ReportViewProps> = () => {
   // Mock data for charts
   const activityData = [
     { name: 'Mon', tasks: 12 },

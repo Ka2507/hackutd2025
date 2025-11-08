@@ -7,6 +7,8 @@ from .prototype_agent import PrototypeAgent
 from .gtm_agent import GtmAgent
 from .automation_agent import AutomationAgent
 from .regulation_agent import RegulationAgent
+from .risk_assessment_agent import RiskAssessmentAgent
+from .prioritization_agent import PrioritizationAgent
 
 __all__ = [
     'BaseAgent',
@@ -16,6 +18,8 @@ __all__ = [
     'PrototypeAgent',
     'GtmAgent',
     'AutomationAgent',
-    'RegulationAgent'
+    'RegulationAgent',
+    'RiskAssessmentAgent',
+    'PrioritizationAgent'
 ]
 

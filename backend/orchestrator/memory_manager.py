@@ -229,6 +229,98 @@ class MemoryManager:
         
         logger.info(f"Loaded {len(self.memories)} memories from {filepath}")
     
+    def find_similar_projects(
+        self,
+        project_description: str,
+        current_project_id: Optional[int] = None,
+        top_k: int = 5
+    ) -> List[Dict[str, Any]]:
+        """
+        Find similar past projects using semantic search
+        
+        Args:
+            project_description: Description of current project
+            current_project_id: ID of current project (to exclude)
+            top_k: Number of similar projects to return
+            
+        Returns:
+            List of similar projects with similarity scores
+        """
+        # Search for projects
+        similar = self.search(
+            query=project_description,
+            top_k=top_k * 2,  # Get more to filter
+            filter_metadata={"type": "project"}
+        )
+        
+        # Filter out current project and format
+        results = []
+        for mem in similar:
+            project_id = mem["metadata"].get("project_id")
+            if project_id and project_id != current_project_id:
+                results.append({
+                    "project_id": project_id,
+                    "name": mem["metadata"].get("name", "Unknown"),
+                    "description": mem.get("text", ""),
+                    "similarity_score": mem.get("similarity", 0),
+                    "metadata": mem["metadata"]
+                })
+            
+            if len(results) >= top_k:
+                break
+        
+        return results
+    
+    def extract_success_patterns(
+        self,
+        similar_projects: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Extract success patterns from similar projects
+        
+        Args:
+            similar_projects: List of similar project data
+            
+        Returns:
+            Extracted patterns and recommendations
+        """
+        if not similar_projects:
+            return {
+                "patterns": [],
+                "recommendations": [],
+                "confidence": 0.0
+            }
+        
+        # Analyze patterns (simplified - in production use Nemotron)
+        successful = [p for p in similar_projects if p["metadata"].get("status") == "completed"]
+        failed = [p for p in similar_projects if p["metadata"].get("status") == "failed"]
+        
+        patterns = {
+            "success_rate": len(successful) / len(similar_projects) if similar_projects else 0,
+            "common_agents": {},
+            "common_workflows": {}
+        }
+        
+        # Extract common agents used in successful projects
+        for project in successful:
+            agents = project["metadata"].get("agents_used", [])
+            for agent in agents:
+                patterns["common_agents"][agent] = patterns["common_agents"].get(agent, 0) + 1
+        
+        recommendations = []
+        if patterns["success_rate"] > 0.7:
+            recommendations.append("High success rate in similar projects - proceed with confidence")
+        
+        most_common_agent = max(patterns["common_agents"].items(), key=lambda x: x[1])[0] if patterns["common_agents"] else None
+        if most_common_agent:
+            recommendations.append(f"Most successful projects used {most_common_agent} agent")
+        
+        return {
+            "patterns": patterns,
+            "recommendations": recommendations,
+            "confidence": min(0.9, len(similar_projects) / 10.0)
+        }
+    
     def get_stats(self) -> Dict[str, Any]:
         """Get statistics about stored memories"""
         agents = {}

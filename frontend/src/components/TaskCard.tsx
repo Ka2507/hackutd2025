@@ -4,6 +4,7 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, Clock, XCircle, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import WorkflowResults from './WorkflowResults';
 
 interface TaskCardProps {
   task: {
@@ -77,15 +78,25 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index = 0 }) => {
           </div>
           
           {task.result && typeof task.result === 'object' && (
-            <div className="mt-3 p-3 bg-charcoal rounded-lg">
-              <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-                <ArrowRight className="w-3 h-3" />
-                <span>Result Preview</span>
-              </div>
-              <pre className="text-xs text-gray-300 overflow-x-auto scrollbar-hide">
-                {JSON.stringify(task.result, null, 2).slice(0, 200)}
-                {JSON.stringify(task.result, null, 2).length > 200 && '...'}
-              </pre>
+            <div className="mt-3">
+              {/* Enhanced workflow results display */}
+              {task.workflow_type && (
+                <WorkflowResults result={task} />
+              )}
+              
+              {/* Fallback JSON preview for non-workflow results */}
+              {!task.workflow_type && (
+                <div className="p-3 bg-charcoal rounded-lg">
+                  <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+                    <ArrowRight className="w-3 h-3" />
+                    <span>Result Preview</span>
+                  </div>
+                  <pre className="text-xs text-gray-300 overflow-x-auto scrollbar-hide">
+                    {JSON.stringify(task.result, null, 2).slice(0, 200)}
+                    {JSON.stringify(task.result, null, 2).length > 200 && '...'}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.config import settings
 from utils.logger import logger
+from .cost_aware_orchestrator import CostAwareOrchestrator
 
 
 class NemotronBridge:
@@ -19,13 +20,14 @@ class NemotronBridge:
     """
     
     def __init__(self):
-        self.api_key = settings.NEMOTRON_API_KEY
-        self.base_url = settings.NEMOTRON_BASE_URL
-        self.model = settings.NEMOTRON_MODEL
-        self.max_calls = settings.NEMOTRON_MAX_CALLS
+        self.api_key = settings.nemotron_api_key
+        self.base_url = settings.nemotron_base_url
+        self.model = settings.nemotron_model
+        self.max_calls = settings.nemotron_max_calls
         self.call_count = 0
         self.call_history = []
         self.response_cache = {}
+        self.cost_orchestrator = CostAwareOrchestrator(total_budget=40.0)
         
         if not self.api_key:
             logger.warning("NEMOTRON_API_KEY not set. Nemotron features will be simulated.")
@@ -77,7 +79,18 @@ class NemotronBridge:
         Returns:
             Response from Nemotron
         """
-        # Check if we should use Nemotron
+        # Use cost-aware orchestrator to decide
+        should_use, value_score = self.cost_orchestrator.should_use_nemotron(
+            task_type=task_type,
+            task_description=prompt[:200],
+            context={"priority": priority}
+        )
+        
+        if not should_use:
+            logger.info(f"Using local LLM instead of Nemotron for {task_type} (value score: {value_score:.2f})")
+            return await self._fallback_to_local(prompt)
+        
+        # Check legacy method as backup
         if not self._should_use_nemotron(task_type, priority):
             logger.info(f"Using local LLM instead of Nemotron for {task_type}")
             return await self._fallback_to_local(prompt)
@@ -139,6 +152,9 @@ class NemotronBridge:
                             "timestamp": result["timestamp"],
                             "tokens": result["usage"].get("total_tokens", 0)
                         })
+                        
+                        # Track cost
+                        self.cost_orchestrator._track_cost(result)
                         
                         # Cache response
                         self.response_cache[cache_key] = result
@@ -283,6 +299,7 @@ class NemotronBridge:
     def get_usage_stats(self) -> Dict[str, Any]:
         """Get usage statistics"""
         total_tokens = sum(call.get("tokens", 0) for call in self.call_history)
+        budget_status = self.cost_orchestrator.get_budget_status()
         
         return {
             "calls_made": self.call_count,
@@ -290,7 +307,8 @@ class NemotronBridge:
             "max_calls": self.max_calls,
             "total_tokens": total_tokens,
             "cached_responses": len(self.response_cache),
-            "call_history": self.call_history[-10:]  # Last 10 calls
+            "call_history": self.call_history[-10:],  # Last 10 calls
+            "budget": budget_status
         }
     
     def reset_limits(self):

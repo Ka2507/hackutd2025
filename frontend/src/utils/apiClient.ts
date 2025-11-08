@@ -94,6 +94,45 @@ class APIClient {
     return response.data;
   }
 
+  // Budget
+  async getBudgetStatus() {
+    const response = await this.client.get('/api/v1/budget/status');
+    return response.data;
+  }
+
+  // Risk Assessment
+  async assessRisk(workflowState: any, projectId?: number, riskFactors?: string[]) {
+    const response = await this.client.post('/api/v1/risk/assess', {
+      workflow_state: workflowState,
+      project_id: projectId,
+      risk_factors: riskFactors,
+    });
+    return response.data;
+  }
+
+  // Prioritization
+  async prioritizeFeatures(features: any[], context: any, method = 'multi_factor') {
+    const response = await this.client.post('/api/v1/prioritize', {
+      features,
+      context,
+      method,
+    });
+    return response.data;
+  }
+
+  // Workflow Templates
+  async listWorkflowTemplates() {
+    const response = await this.client.get('/api/v1/workflows/templates');
+    return response.data;
+  }
+
+  async recommendTemplate(projectDescription: string) {
+    const response = await this.client.get('/api/v1/workflows/templates/recommend', {
+      params: { project_description: projectDescription },
+    });
+    return response.data;
+  }
+
   // Integrations
   async getJiraSprint(sprintId: string) {
     const response = await this.client.get(`/api/v1/integrations/jira/sprint/${sprintId}`);

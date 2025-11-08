@@ -12,10 +12,13 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from agents import (
     StrategyAgent, ResearchAgent, DevAgent, PrototypeAgent,
-    GtmAgent, AutomationAgent, RegulationAgent
+    GtmAgent, AutomationAgent, RegulationAgent,
+    RiskAssessmentAgent, PrioritizationAgent
 )
 from .memory_manager import memory_manager
 from .nemotron_bridge import nemotron_bridge
+from .adaptive_workflow import AdaptiveWorkflowEngine
+from .agent_collaboration import AgentCollaboration
 from utils.logger import logger
 
 
@@ -26,6 +29,7 @@ class WorkflowType(Enum):
     DEV_PLANNING = "dev_planning"
     LAUNCH_PLANNING = "launch_planning"
     COMPLIANCE_CHECK = "compliance_check"
+    ADAPTIVE = "adaptive"  # New: Adaptive workflow
     CUSTOM = "custom"
 
 
@@ -45,10 +49,14 @@ class TaskGraph:
             "prototype": PrototypeAgent(self.shared_context),
             "gtm": GtmAgent(self.shared_context),
             "automation": AutomationAgent(self.shared_context),
-            "regulation": RegulationAgent(self.shared_context)
+            "regulation": RegulationAgent(self.shared_context),
+            "risk": RiskAssessmentAgent(self.shared_context),
+            "prioritization": PrioritizationAgent(self.shared_context)
         }
         self.workflow_history = []
-        logger.info("TaskGraph initialized with all agents")
+        self.adaptive_engine = AdaptiveWorkflowEngine(self.agents)
+        self.collaboration = AgentCollaboration(self.agents)
+        logger.info("TaskGraph initialized with all agents including risk and prioritization")
     
     async def execute_workflow(
         self,
@@ -88,6 +96,7 @@ class TaskGraph:
             WorkflowType.DEV_PLANNING.value: self._dev_planning,
             WorkflowType.LAUNCH_PLANNING.value: self._launch_planning,
             WorkflowType.COMPLIANCE_CHECK.value: self._compliance_check,
+            WorkflowType.ADAPTIVE.value: self._adaptive_workflow,
         }
         
         workflow_func = workflow_map.get(workflow_type, self._custom_workflow)
@@ -141,6 +150,20 @@ class TaskGraph:
         })
         results["steps"].append(research_result)
         
+        # Step 2.5: Risk Assessment - Early risk detection
+        logger.info("Step 2.5: Risk Assessment")
+        current_state = {
+            "feature": input_data.get("feature", ""),
+            "market": input_data.get("market", ""),
+            "strategy_output": strategy_result.get("result", {}),
+            "research_output": research_result.get("result", {})
+        }
+        risk_result = await self.agents["risk"].execute({
+            "workflow_state": current_state,
+            "project_id": project_id
+        })
+        results["steps"].append(risk_result)
+        
         # Step 3: Dev Agent - Generate user stories and backlog
         logger.info("Step 3: Dev Agent")
         dev_result = await self.agents["dev"].execute({
@@ -149,6 +172,25 @@ class TaskGraph:
             "requirements": input_data.get("requirements", [])
         })
         results["steps"].append(dev_result)
+        
+        # Step 3.5: Prioritization - Smart prioritization of generated stories
+        logger.info("Step 3.5: Prioritization Agent")
+        if dev_result.get("result", {}).get("stories"):
+            stories = dev_result["result"]["stories"]
+            prioritization_result = await self.agents["prioritization"].execute({
+                "features": stories,
+                "context": {
+                    "market_data": strategy_result.get("result", {}),
+                    "user_feedback": research_result.get("result", {}),
+                    "strategic_goals": input_data.get("strategic_goals", [])
+                },
+                "method": "multi_factor"
+            })
+            results["steps"].append(prioritization_result)
+            
+            # Update dev_result with prioritized stories
+            if prioritization_result.get("result", {}).get("prioritized_features"):
+                dev_result["result"]["prioritized_stories"] = prioritization_result["result"]["prioritized_features"]
         
         # Step 4: Prototype Agent - Create mockups
         logger.info("Step 4: Prototype Agent")
@@ -370,6 +412,37 @@ class TaskGraph:
     def get_workflow_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Get recent workflow history"""
         return self.workflow_history[-limit:]
+    
+    async def _adaptive_workflow(
+        self,
+        input_data: Dict[str, Any],
+        project_id: Optional[int]
+    ) -> Dict[str, Any]:
+        """Execute adaptive workflow using intelligent routing"""
+        logger.info("Executing adaptive workflow")
+        
+        # Plan workflow dynamically
+        task_description = input_data.get("task_description", input_data.get("feature", "General PM task"))
+        nodes = await self.adaptive_engine.plan_workflow(
+            task_description=task_description,
+            input_data=input_data,
+            available_agents=list(self.agents.keys())
+        )
+        
+        # Execute with adaptation
+        result = await self.adaptive_engine.execute_adaptive_workflow(
+            nodes=nodes,
+            input_data=input_data,
+            shared_context=self.shared_context
+        )
+        
+        # Convert to standard format
+        return {
+            "workflow": "adaptive",
+            "steps": result.get("nodes", []),
+            "adaptations": result.get("adaptations", []),
+            "summary": result.get("summary", {})
+        }
 
 
 # Global instance

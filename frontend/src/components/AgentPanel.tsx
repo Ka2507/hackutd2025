@@ -2,12 +2,12 @@
  * AgentPanel - Displays individual agent status with modern design
  */
 import { motion } from 'framer-motion';
-import { Bot, CheckCircle, Clock, AlertCircle, Loader2, Activity } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Loader2, Activity } from 'lucide-react';
 import { AgentStatus } from '@/hooks/useAgents';
 
 interface AgentPanelProps {
   agent: AgentStatus;
-  agentKey: string;
+  agentKey?: string;
   onClick?: () => void;
 }
 
@@ -45,7 +45,7 @@ const statusConfig = {
   },
 };
 
-export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, agentKey, onClick }) => {
+export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
   const config = statusConfig[agent.status as keyof typeof statusConfig] || statusConfig.idle;
   const StatusIcon = config.icon;
 
@@ -66,7 +66,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, agentKey, onClick
       <div className="relative flex items-start gap-4">
         {/* Icon */}
         <div className={`${config.bgColor} ${config.borderColor} border rounded-lg p-2.5 flex-shrink-0`}>
-          <StatusIcon className={`w-5 h-5 ${config.color} ${config.animate || ''}`} />
+          <StatusIcon className={`w-5 h-5 ${config.color} ${'animate' in config ? config.animate : ''}`} />
         </div>
         
         {/* Content */}
