@@ -14,7 +14,7 @@ class SlackAPI:
     """Mock Slack API integration"""
     
     def __init__(self):
-        self.bot_token = settings.SLACK_BOT_TOKEN
+        self.bot_token = settings.slack_bot_token
         self.connected = bool(self.bot_token)
         
         if not self.connected:

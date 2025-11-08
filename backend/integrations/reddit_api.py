@@ -14,8 +14,8 @@ class RedditAPI:
     """Mock Reddit API integration"""
     
     def __init__(self):
-        self.client_id = settings.REDDIT_CLIENT_ID
-        self.client_secret = settings.REDDIT_CLIENT_SECRET
+        self.client_id = settings.reddit_client_id
+        self.client_secret = settings.reddit_client_secret
         self.connected = bool(self.client_id and self.client_secret)
         
         if not self.connected:
