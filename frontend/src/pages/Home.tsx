@@ -47,13 +47,13 @@ export const Home: React.FC = () => {
     <div className="min-h-screen bg-dark">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-nvidia-green/5 via-transparent to-pnc-blue/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         
         {/* Animated grid background */}
-        <div className="absolute inset-0 opacity-20" 
+        <div className="absolute inset-0 opacity-10" 
              style={{
-               backgroundImage: `linear-gradient(rgba(118, 185, 0, 0.1) 1px, transparent 1px),
-                                linear-gradient(90deg, rgba(0, 71, 187, 0.1) 1px, transparent 1px)`,
+               backgroundImage: `linear-gradient(rgba(173, 181, 189, 0.3) 1px, transparent 1px),
+                                linear-gradient(90deg, rgba(173, 181, 189, 0.3) 1px, transparent 1px)`,
                backgroundSize: '50px 50px'
              }} 
         />
@@ -67,7 +67,7 @@ export const Home: React.FC = () => {
           >
             {/* Logo/Title */}
             <div className="mb-6 inline-flex items-center gap-3 px-4 py-2 bg-dark-card border border-dark-border rounded-full">
-              <Sparkles className="w-5 h-5 text-nvidia-green" />
+              <Sparkles className="w-5 h-5 text-primary-light" />
               <span className="text-sm font-medium text-gray-300">
                 Powered by NVIDIA Nemotron
               </span>
@@ -91,14 +91,14 @@ export const Home: React.FC = () => {
                 onClick={() => navigate('/dashboard')}
                 className="btn btn-primary text-lg px-8 py-4 w-full sm:w-auto"
               >
-                Get Started
+                Launch Dashboard
                 <ArrowRight className="w-5 h-5" />
               </button>
               <button
                 onClick={() => navigate('/insights')}
-                className="btn btn-ghost text-lg px-8 py-4 w-full sm:w-auto"
+                className="btn btn-secondary text-lg px-8 py-4 w-full sm:w-auto"
               >
-                View Demo
+                View Analytics
                 <TrendingUp className="w-5 h-5" />
               </button>
             </div>
@@ -134,9 +134,9 @@ export const Home: React.FC = () => {
                 className="card card-hover card-interactive"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-14 h-14 mb-4 bg-gradient-to-br from-nvidia-green/20 to-pnc-blue/20 
-                                border border-nvidia-green/30 rounded-xl flex items-center justify-center">
-                    <Icon className="w-7 h-7 text-nvidia-green" />
+                  <div className="w-14 h-14 mb-4 bg-gradient-to-br from-primary/20 to-accent/20 
+                                border border-primary/30 rounded-xl flex items-center justify-center">
+                    <Icon className="w-7 h-7 text-primary-light" />
                   </div>
                   <h3 className="text-lg font-display font-semibold text-gray-100 mb-2">
                     {feature.title}
@@ -178,10 +178,10 @@ export const Home: React.FC = () => {
                 className="card card-hover group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-pnc-blue/20 border border-pnc-blue/30 
+                  <div className="w-10 h-10 bg-accent/20 border border-accent/30 
                                 rounded-lg flex items-center justify-center flex-shrink-0
-                                group-hover:bg-pnc-blue/30 transition-colors">
-                    <Bot className="w-5 h-5 text-pnc-blue-light" />
+                                group-hover:bg-accent/30 transition-colors">
+                    <Bot className="w-5 h-5 text-primary-light" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display font-semibold text-gray-100 mb-1">

@@ -70,8 +70,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             >
               {message.role !== 'user' && (
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-neon-cyan/20 border border-neon-cyan flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-neon-cyan" />
+                  <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-primary-light" />
                   </div>
                 </div>
               )}
@@ -79,15 +79,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div
                 className={`max-w-[70%] rounded-2xl px-4 py-3 ${
                   message.role === 'user'
-                    ? 'bg-gradient-to-r from-neon-cyan to-neon-orange text-charcoal'
-                    : 'bg-gray-200 text-white border border-gray-300'
+                    ? 'bg-primary text-light'
+                    : 'bg-dark-card text-light border border-dark-border'
                 }`}
               >
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">
                   {message.content}
                 </p>
                 <span className={`text-xs mt-2 block ${
-                  message.role === 'user' ? 'text-charcoal/70' : 'text-gray-400'
+                  message.role === 'user' ? 'text-light/70' : 'text-gray-400'
                 }`}>
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
@@ -111,11 +111,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             className="flex gap-3"
           >
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-neon-cyan/20 border border-neon-cyan flex items-center justify-center">
-                <Bot className="w-5 h-5 text-neon-cyan animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary flex items-center justify-center">
+                <Bot className="w-5 h-5 text-primary-light animate-pulse" />
               </div>
             </div>
-            <div className="bg-gray-200 rounded-2xl px-4 py-3 border border-gray-300">
+            <div className="bg-dark-card rounded-2xl px-4 py-3 border border-dark-border">
               <div className="flex gap-1">
                 <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
                 <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />

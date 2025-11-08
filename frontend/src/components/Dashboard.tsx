@@ -102,7 +102,7 @@ export const Dashboard: React.FC = () => {
       {/* Quick Actions */}
       <div className="mb-8 card">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Play className="w-5 h-5 text-neon-cyan" />
+          <Play className="w-5 h-5 text-primary-light" />
           Quick Actions
         </h2>
         <div className="flex gap-4">
@@ -152,8 +152,8 @@ export const Dashboard: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-6 py-3 font-medium transition-colors relative ${
                   activeTab === tab.id
-                    ? 'text-neon-cyan'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'text-primary-light'
+                    : 'text-gray-400 hover:text-light'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export const Dashboard: React.FC = () => {
                 {activeTab === tab.id && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-neon-cyan"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-light"
                   />
                 )}
               </button>

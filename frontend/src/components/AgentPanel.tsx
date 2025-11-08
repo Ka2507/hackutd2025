@@ -20,16 +20,16 @@ const statusConfig = {
   },
   running: {
     icon: Loader2,
-    color: 'text-nvidia-green',
-    bgColor: 'bg-nvidia-green/10',
-    borderColor: 'border-nvidia-green/40',
+    color: 'text-primary-light',
+    bgColor: 'bg-primary/10',
+    borderColor: 'border-primary/40',
     animate: 'animate-spin',
   },
   completed: {
     icon: CheckCircle,
-    color: 'text-nvidia-green-light',
-    bgColor: 'bg-nvidia-green/10',
-    borderColor: 'border-nvidia-green/30',
+    color: 'text-primary-light',
+    bgColor: 'bg-primary/10',
+    borderColor: 'border-primary/30',
   },
   failed: {
     icon: AlertCircle,
@@ -39,9 +39,9 @@ const statusConfig = {
   },
   pending: {
     icon: Clock,
-    color: 'text-pnc-orange',
-    bgColor: 'bg-pnc-orange/10',
-    borderColor: 'border-pnc-orange/30',
+    color: 'text-gray-400',
+    bgColor: 'bg-gray-600/10',
+    borderColor: 'border-gray-500/30',
   },
 };
 
@@ -60,7 +60,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
     >
       {/* Subtle gradient overlay */}
       {agent.status === 'running' && (
-        <div className="absolute inset-0 bg-gradient-to-br from-nvidia-green/5 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
       )}
       
       <div className="relative flex items-start gap-4">
@@ -93,7 +93,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
           {agent.status === 'running' && (
             <div className="relative h-1 bg-dark-border rounded-full overflow-hidden">
               <motion.div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-nvidia-green to-nvidia-green-light rounded-full"
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary-light rounded-full"
                 initial={{ width: '0%' }}
                 animate={{ width: ['0%', '100%'] }}
                 transition={{

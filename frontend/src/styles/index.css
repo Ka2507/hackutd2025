@@ -4,9 +4,8 @@
 
 @layer base {
   body {
-    @apply bg-dark text-gray-100 font-sans antialiased;
-    background-image: radial-gradient(circle at 20% 50%, rgba(118, 185, 0, 0.03) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 80%, rgba(0, 71, 187, 0.03) 0%, transparent 50%);
+    @apply bg-dark text-light font-sans antialiased;
+    background: linear-gradient(135deg, #212529 0%, #343a40 100%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -21,20 +20,20 @@
   }
 
   .btn-primary {
-    @apply bg-nvidia-green text-dark hover:bg-nvidia-green-light 
-           shadow-lg shadow-nvidia-green/20 hover:shadow-nvidia-green/40
+    @apply bg-primary text-light hover:bg-primary-light 
+           shadow-lg shadow-primary/30 hover:shadow-primary/50
            hover:scale-105 active:scale-95;
   }
 
   .btn-secondary {
-    @apply bg-pnc-blue text-white hover:bg-pnc-blue-light 
-           shadow-lg shadow-pnc-blue/20 hover:shadow-pnc-blue/40
+    @apply bg-accent text-light hover:bg-accent-light 
+           shadow-lg shadow-accent/30 hover:shadow-accent/50
            hover:scale-105 active:scale-95;
   }
 
   .btn-ghost {
     @apply bg-transparent border border-dark-border text-gray-300 
-           hover:bg-dark-card hover:border-nvidia-green/50;
+           hover:bg-dark-card hover:border-primary-light;
   }
 
   .card {
@@ -43,8 +42,8 @@
   }
 
   .card-hover {
-    @apply hover:border-nvidia-green/50 hover:shadow-xl 
-           hover:shadow-nvidia-green/10 hover:-translate-y-1;
+    @apply hover:border-primary-light hover:shadow-xl 
+           hover:shadow-primary/20 hover:-translate-y-1;
   }
 
   .card-interactive {
@@ -53,9 +52,9 @@
 
   .input {
     @apply bg-dark-lighter border border-dark-border rounded-lg px-4 py-2.5 
-           text-gray-100 placeholder-gray-500 
-           focus:outline-none focus:border-nvidia-green focus:ring-2 
-           focus:ring-nvidia-green/20 transition-all duration-200;
+           text-light placeholder-gray-500 
+           focus:outline-none focus:border-primary-light focus:ring-2 
+           focus:ring-primary/20 transition-all duration-200;
   }
 
   .badge {
@@ -63,11 +62,11 @@
   }
 
   .badge-success {
-    @apply bg-nvidia-green/20 text-nvidia-green-light border border-nvidia-green/30;
+    @apply bg-primary/20 text-primary-light border border-primary/40;
   }
 
   .badge-warning {
-    @apply bg-pnc-orange/20 text-pnc-orange border border-pnc-orange/30;
+    @apply bg-accent/20 text-accent-light border border-accent/40;
   }
 
   .badge-error {
@@ -75,11 +74,11 @@
   }
 
   .badge-info {
-    @apply bg-pnc-blue/20 text-pnc-blue-light border border-pnc-blue/30;
+    @apply bg-primary-lighter/20 text-light border border-primary-lighter/40;
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-nvidia-green to-pnc-blue bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary-light via-gray-300 to-primary bg-clip-text text-transparent;
   }
 
   .gradient-border {
@@ -134,15 +133,15 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-dark-border rounded-full hover:bg-nvidia-green/50;
+  @apply bg-dark-border rounded-full hover:bg-primary/50;
 }
 
 /* Selection styling */
 ::selection {
-  @apply bg-nvidia-green/30 text-white;
+  @apply bg-primary/30 text-light;
 }
 
 ::-moz-selection {
-  @apply bg-nvidia-green/30 text-white;
+  @apply bg-primary/30 text-light;
 }
 
