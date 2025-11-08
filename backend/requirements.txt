@@ -1,0 +1,42 @@
+# ProdigyPM Backend Requirements
+
+# FastAPI and server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+websockets==12.0
+
+# Pydantic for data validation
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# CORS and middleware
+python-dotenv==1.0.0
+
+# Database
+aiofiles==23.2.1
+
+# AI/ML Libraries
+# Note: Install locally for actual LLM usage
+# ollama  # Install via: pip install ollama
+# openai  # For Nemotron API calls if needed
+
+# Vector store (optional, for production)
+# faiss-cpu==1.7.4  # Uncomment for FAISS support
+# pinecone-client==2.2.4  # Uncomment for Pinecone support
+
+# For embeddings (optional, for production)
+# sentence-transformers==2.2.2
+
+# HTTP client for API calls
+aiohttp==3.9.1
+httpx==0.25.2
+
+# Integrations (optional, for production)
+# atlassian-python-api==3.41.0  # Jira
+# slack-sdk==3.26.1  # Slack
+# praw==7.7.1  # Reddit
+
+# Utilities
+python-dateutil==2.8.2
+
