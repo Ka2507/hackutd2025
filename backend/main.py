@@ -18,6 +18,7 @@ from orchestrator.memory_manager import memory_manager
 from orchestrator.nemotron_bridge import nemotron_bridge
 from orchestrator.workflow_templates import workflow_template_engine
 from integrations import jira_api, slack_api, figma_api, reddit_api
+from demo_scenarios import get_demo_scenario, list_demo_scenarios
 
 
 # Initialize FastAPI app
@@ -641,6 +642,91 @@ async def update_budget(request: Dict[str, Any]):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error updating budget: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/demo/scenarios")
+async def list_demos():
+    """List all available demo scenarios"""
+    try:
+        scenarios = list_demo_scenarios()
+        return {
+            "success": True,
+            "scenarios": scenarios
+        }
+    except Exception as e:
+        logger.error(f"Error listing demo scenarios: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/demo/run")
+async def run_demo_scenario(request: Dict[str, Any]):
+    """Run a pre-configured demo scenario"""
+    try:
+        scenario_key = request.get("scenario_key")
+        if not scenario_key:
+            raise HTTPException(status_code=400, detail="scenario_key is required")
+        
+        scenario = get_demo_scenario(scenario_key)
+        if not scenario:
+            raise HTTPException(status_code=404, detail=f"Scenario '{scenario_key}' not found")
+        
+        # Execute the workflow with demo data
+        result = await task_graph.execute_workflow(
+            workflow_type=scenario["workflow_type"],
+            input_data=scenario["input_data"],
+            project_id=None,
+            use_nemotron=True
+        )
+        
+        return {
+            "success": True,
+            "scenario": scenario["name"],
+            "result": result,
+            "expected_outputs": scenario.get("expected_outputs", {})
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error running demo scenario: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/refine_agent_output")
+async def refine_agent_output(request: Dict[str, Any]):
+    """Refine an agent's output based on user feedback"""
+    try:
+        agent_name = request.get("agent_name")
+        original_output = request.get("original_output")
+        feedback = request.get("feedback")
+        context = request.get("context", {})
+        
+        if not agent_name or not original_output or not feedback:
+            raise HTTPException(status_code=400, detail="agent_name, original_output, and feedback are required")
+        
+        # Get the agent
+        if agent_name not in task_graph.agents:
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_name}' not found")
+        
+        agent = task_graph.agents[agent_name]
+        
+        # Refine the output
+        refined = await agent.refine_output(
+            original_output=original_output,
+            feedback=feedback,
+            context=context
+        )
+        
+        return {
+            "success": True,
+            "original": original_output,
+            "refined": refined,
+            "improvements": refined.get("improvements", [])
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error refining agent output: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

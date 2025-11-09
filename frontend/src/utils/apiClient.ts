@@ -107,6 +107,30 @@ class APIClient {
     return response.data;
   }
 
+  // Demo Scenarios
+  async listDemoScenarios() {
+    const response = await this.client.get('/api/v1/demo/scenarios');
+    return response.data;
+  }
+
+  async runDemoScenario(scenarioKey: string) {
+    const response = await this.client.post('/api/v1/demo/run', {
+      scenario_key: scenarioKey,
+    });
+    return response.data;
+  }
+
+  // Refinement
+  async refineAgentOutput(agentName: string, originalOutput: any, feedback: string) {
+    const response = await this.client.post('/api/v1/refine_agent_output', {
+      agent_name: agentName,
+      original_output: originalOutput,
+      feedback,
+      context: {},
+    });
+    return response.data;
+  }
+
   // Risk Assessment
   async assessRisk(workflowState: any, projectId?: number, riskFactors?: string[]) {
     const response = await this.client.post('/api/v1/risk/assess', {

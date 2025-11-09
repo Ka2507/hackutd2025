@@ -2,7 +2,7 @@
  * AgentPanel - Displays individual agent status with modern design
  */
 import { motion } from 'framer-motion';
-import { CheckCircle, Clock, AlertCircle, Loader2, Activity } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Loader2, Activity, Brain } from 'lucide-react';
 import { AgentStatus } from '@/hooks/useAgents';
 
 interface AgentPanelProps {
@@ -17,6 +17,13 @@ const statusConfig = {
     color: 'text-gray-400',
     bgColor: 'bg-gray-500/10',
     borderColor: 'border-gray-500/20',
+  },
+  thinking: {
+    icon: Brain,
+    color: 'text-yellow-400',
+    bgColor: 'bg-yellow-500/10',
+    borderColor: 'border-yellow-500/40',
+    animate: 'animate-pulse',
   },
   running: {
     icon: Loader2,
@@ -89,9 +96,33 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
             {agent.goal}
           </p>
           
+          {/* Thinking/Reasoning display */}
+          {(agent.status === 'thinking' || agent.status === 'running') && agent.reasoning && (
+            <div className="mt-2 p-2 bg-dark-lighter rounded text-xs">
+              <div className="text-yellow-400 font-medium mb-1 flex items-center gap-1">
+                <Brain className="w-3 h-3" />
+                Thinking...
+              </div>
+              <div className="space-y-1 text-gray-400">
+                {agent.reasoning.slice(0, 2).map((step: string, i: number) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.3 }}
+                    className="flex items-start gap-1"
+                  >
+                    <span className="text-neon-cyan">•</span>
+                    <span>{step}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+          
           {/* Progress bar for running status */}
           {agent.status === 'running' && (
-            <div className="relative h-1 bg-dark-border rounded-full overflow-hidden">
+            <div className="relative h-1 bg-dark-border rounded-full overflow-hidden mt-2">
               <motion.div
                 className="absolute inset-y-0 left-0 bg-gradient-to-r from-nvidia-green to-nvidia-green-light rounded-full"
                 initial={{ width: '0%' }}

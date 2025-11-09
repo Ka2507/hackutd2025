@@ -1,20 +1,27 @@
 /**
  * Dashboard - Main dashboard layout with agents and activity
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Layers, History } from 'lucide-react';
+import { Play, Layers, History, Network, TrendingUp, Rocket } from 'lucide-react';
 import { useAgents } from '@/hooks/useAgents';
 import AgentPanel from './AgentPanel';
 import TaskCard from './TaskCard';
 import ChatInterface from './ChatInterface';
 import BudgetMeter from './BudgetMeter';
 import WorkflowTemplates from './WorkflowTemplates';
+import WorkflowVisualization from './WorkflowVisualization';
+import BeforeAfter from './BeforeAfter';
+import RefinementModal from './RefinementModal';
+import apiClient from '@/utils/apiClient';
 
 export const Dashboard: React.FC = () => {
   const { agents, wsMessages, runWorkflow } = useAgents();
-  const [activeTab, setActiveTab] = useState<'agents' | 'chat' | 'activity' | 'templates'>('agents');
+  const [activeTab, setActiveTab] = useState<'agents' | 'visualization' | 'chat' | 'activity' | 'templates' | 'impact'>('agents');
   const [selectedWorkflow, setSelectedWorkflow] = useState('');
+  const [demoScenarios, setDemoScenarios] = useState<any[]>([]);
+  const [refinementModal, setRefinementModal] = useState<{open: boolean, agentName: string, output: any}>({open: false, agentName: '', output: null});
+  const [workflowState, setWorkflowState] = useState<any>(null);
 
   const workflows = [
     { value: 'adaptive', label: '🤖 Adaptive Workflow (AI-Powered)', description: 'Intelligently selects agents based on task' },
@@ -24,6 +31,35 @@ export const Dashboard: React.FC = () => {
     { value: 'launch_planning', label: 'Launch Planning', description: 'Go-to-market and automation' },
     { value: 'compliance_check', label: 'Compliance Check', description: 'Regulatory compliance review' },
   ];
+
+  useEffect(() => {
+    // Load demo scenarios
+    apiClient.listDemoScenarios().then(res => {
+      if (res.scenarios) {
+        setDemoScenarios(Object.entries(res.scenarios).map(([key, value]: [string, any]) => ({
+          key,
+          ...value
+        })));
+      }
+    }).catch(console.error);
+
+    // Parse workflow state from WebSocket messages
+    const latestWorkflow = wsMessages
+      .filter(msg => msg.type === 'agent_status' || msg.type === 'task_completed')
+      .slice(-1)[0];
+    
+    if (latestWorkflow) {
+      setWorkflowState(latestWorkflow.data);
+    }
+  }, [wsMessages]);
+
+  const handleRunDemo = async (scenarioKey: string) => {
+    try {
+      await apiClient.runDemoScenario(scenarioKey);
+    } catch (error) {
+      console.error('Error running demo:', error);
+    }
+  };
 
   const handleRunWorkflow = async () => {
     if (!selectedWorkflow) return;
@@ -100,40 +136,64 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="mb-8 card">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Play className="w-5 h-5 text-neon-cyan" />
-          Quick Actions
-        </h2>
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <select
-              value={selectedWorkflow}
-              onChange={(e) => setSelectedWorkflow(e.target.value)}
-              className="w-full input"
+      <div className="mb-8 space-y-4">
+        <div className="card">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Play className="w-5 h-5 text-neon-cyan" />
+            Quick Actions
+          </h2>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <select
+                value={selectedWorkflow}
+                onChange={(e) => setSelectedWorkflow(e.target.value)}
+                className="w-full input"
+              >
+                <option value="">Select Workflow...</option>
+                {workflows.map((wf) => (
+                  <option key={wf.value} value={wf.value}>
+                    {wf.label}
+                  </option>
+                ))}
+              </select>
+              {selectedWorkflow && (
+                <p className="text-xs text-gray-400 mt-1">
+                  {workflows.find(w => w.value === selectedWorkflow)?.description}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={handleRunWorkflow}
+              disabled={!selectedWorkflow}
+              className="btn btn-primary disabled:opacity-50"
             >
-              <option value="">Select Workflow...</option>
-              {workflows.map((wf) => (
-                <option key={wf.value} value={wf.value}>
-                  {wf.label}
-                </option>
-              ))}
-            </select>
-            {selectedWorkflow && (
-              <p className="text-xs text-gray-400 mt-1">
-                {workflows.find(w => w.value === selectedWorkflow)?.description}
-              </p>
-            )}
+              <Play className="w-5 h-5 mr-2" />
+              Run Workflow
+            </button>
           </div>
-          <button
-            onClick={handleRunWorkflow}
-            disabled={!selectedWorkflow}
-            className="btn btn-primary disabled:opacity-50"
-          >
-            <Play className="w-5 h-5 mr-2" />
-            Run Workflow
-          </button>
         </div>
+
+        {/* Demo Scenarios */}
+        {demoScenarios.length > 0 && (
+          <div className="card">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Rocket className="w-5 h-5 text-neon-cyan" />
+              Demo Scenarios
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {demoScenarios.map((scenario) => (
+                <button
+                  key={scenario.key}
+                  onClick={() => handleRunDemo(scenario.key)}
+                  className="p-3 bg-dark-lighter hover:bg-dark-border rounded border border-dark-border transition-colors text-left"
+                >
+                  <div className="font-medium text-white mb-1">{scenario.name}</div>
+                  <div className="text-xs text-gray-400">{scenario.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -141,6 +201,8 @@ export const Dashboard: React.FC = () => {
         <div className="flex gap-2 border-b border-gray-300">
           {[
             { id: 'agents', label: 'Agents', icon: Layers },
+            { id: 'visualization', label: 'Workflow', icon: Network },
+            { id: 'impact', label: 'Impact', icon: TrendingUp },
             { id: 'templates', label: 'Templates', icon: Layers },
             { id: 'chat', label: 'Chat', icon: History },
             { id: 'activity', label: 'Activity', icon: History },
@@ -177,8 +239,60 @@ export const Dashboard: React.FC = () => {
         {activeTab === 'agents' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(agents).map(([key, agent]) => (
-              <AgentPanel key={key} agent={agent} agentKey={key} />
+              <AgentPanel 
+                key={key} 
+                agent={agent} 
+                agentKey={key}
+                onClick={() => {
+                  // Show refinement modal if agent has output
+                  if (agent.last_output) {
+                    setRefinementModal({
+                      open: true,
+                      agentName: agent.name,
+                      output: agent.last_output
+                    });
+                  }
+                }}
+              />
             ))}
+          </div>
+        )}
+
+        {activeTab === 'visualization' && (
+          <div className="space-y-4">
+            <WorkflowVisualization
+              agents={Object.entries(agents).map(([key, agent]) => ({
+                name: agent.name,
+                status: agent.status === 'running' ? 'working' : 
+                       agent.status === 'completed' ? 'done' : 'idle',
+                quality_score: agent.quality_score,
+                reasoning: agent.reasoning,
+                collaborating_with: agent.collaborating_with,
+              }))}
+              contextFlow={workflowState?.context_flow || []}
+              onNodeClick={(agentName) => {
+                const agent = Object.values(agents).find(a => a.name === agentName);
+                if (agent?.last_output) {
+                  setRefinementModal({
+                    open: true,
+                    agentName: agent.name,
+                    output: agent.last_output
+                  });
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {activeTab === 'impact' && (
+          <div className="space-y-6">
+            <BeforeAfter
+              timeSaved={8.5}
+              qualityImprovement={35}
+              itemsGenerated={23}
+              traditionalCount={8}
+              automatedCount={23}
+            />
           </div>
         )}
 
@@ -261,6 +375,18 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Refinement Modal */}
+      <RefinementModal
+        isOpen={refinementModal.open}
+        onClose={() => setRefinementModal({open: false, agentName: '', output: null})}
+        agentName={refinementModal.agentName}
+        originalOutput={refinementModal.output}
+        onRefined={(refined) => {
+          console.log('Refined output:', refined);
+          // Could update agent state here
+        }}
+      />
     </div>
   );
 };

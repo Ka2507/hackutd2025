@@ -8,6 +8,10 @@ export interface AgentStatus {
   name: string;
   status: string;
   goal: string;
+  quality_score?: number;
+  reasoning?: string[];
+  collaborating_with?: string[];
+  last_output?: any;
 }
 
 export interface AgentsState {
@@ -80,13 +84,21 @@ export const useAgents = () => {
       setWsMessages(prev => [...prev.slice(-50), data]); // Keep last 50 messages
       
       // Update agent status based on WebSocket messages
-      if (data.type === 'agent_started' || data.type === 'agent_completed') {
-        const agentName = data.data.agent;
+      if (data.type === 'agent_started' || data.type === 'agent_completed' || data.type === 'agent_status') {
+        const agentName = data.data.agent || data.data.agent_name;
+        const agentData = data.data;
+        
         setAgents(prev => ({
           ...prev,
           [agentName]: {
             ...prev[agentName],
-            status: data.type === 'agent_started' ? 'running' : 'completed',
+            status: data.type === 'agent_started' ? 'running' : 
+                   data.type === 'agent_completed' ? 'completed' :
+                   agentData.status || prev[agentName]?.status || 'idle',
+            quality_score: agentData.quality_score || prev[agentName]?.quality_score,
+            reasoning: agentData.reasoning || prev[agentName]?.reasoning,
+            collaborating_with: agentData.collaborating_with || prev[agentName]?.collaborating_with,
+            last_output: agentData.output || agentData.result || prev[agentName]?.last_output,
           },
         }));
       }

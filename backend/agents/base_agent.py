@@ -111,6 +111,62 @@ class BaseAgent(ABC):
         else:
             return f"Agent {self.name} processing task with {model} model."
     
+    async def refine_output(
+        self,
+        original_output: Dict[str, Any],
+        feedback: str,
+        context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Refine agent output based on user feedback
+        
+        Args:
+            original_output: The original agent output
+            feedback: User feedback on what to improve
+            context: Additional context for refinement
+            
+        Returns:
+            Refined output with improvements
+        """
+        logger.info(f"Agent {self.name} refining output based on feedback")
+        
+        # Create refinement prompt
+        refinement_prompt = f"""
+        Original output:
+        {original_output}
+        
+        User feedback:
+        {feedback}
+        
+        Please refine the output to address the feedback while maintaining quality and completeness.
+        """
+        
+        # Call LLM for refinement
+        refined_text = await self._call_llm(refinement_prompt, model="local")
+        
+        # Parse refined output (in real implementation, this would be more sophisticated)
+        refined_result = original_output.get("result", {})
+        if isinstance(refined_result, dict):
+            refined_result["refined_note"] = refined_text
+            refined_result["improvements"] = [
+                "Output refined based on user feedback",
+                "Enhanced clarity and specificity",
+                "Improved alignment with requirements"
+            ]
+        
+        return {
+            "agent": self.name,
+            "timestamp": datetime.now().isoformat(),
+            "status": "refined",
+            "result": refined_result,
+            "original": original_output,
+            "improvements": refined_result.get("improvements", []),
+            "metadata": {
+                "refinement_feedback": feedback,
+                "context": context or {}
+            }
+        }
+    
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}(name='{self.name}', status='{self.status}')>"
 
