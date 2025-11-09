@@ -16,6 +16,9 @@ python-dotenv==1.0.0
 # Database
 aiofiles==23.2.1
 
+# Numerical computing (required for memory manager)
+numpy>=1.24.0
+
 # AI/ML Libraries
 # Note: Install locally for actual LLM usage
 # ollama  # Install via: pip install ollama

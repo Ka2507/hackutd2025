@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # NVIDIA Nemotron Settings
     nemotron_api_key: Optional[str] = None
     nemotron_base_url: str = "https://integrate.api.nvidia.com/v1"
-    nemotron_model: str = "nvidia/nemotron-4-340b-instruct"
+    nemotron_model: str = "nvidia/llama-3.1-nemotron-ultra-253b-v1"  # Default: Ultra model for complex tasks
     nemotron_max_calls: int = 3
     
     # Vector Store Settings

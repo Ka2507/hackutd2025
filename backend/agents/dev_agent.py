@@ -12,7 +12,8 @@ class DevAgent(BaseAgent):
         super().__init__(
             name="DevAgent",
             goal="Generate user stories, backlog items, and technical specifications",
-            context=context
+            context=context,
+            agent_key="dev"
         )
     
     async def execute(self, task_input: Dict[str, Any]) -> Dict[str, Any]:

@@ -88,17 +88,24 @@ export const Home: React.FC = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/chat')}
                 className="btn btn-primary text-lg px-8 py-4 w-full sm:w-auto"
               >
-                Get Started
+                Start Chat with AI Co-Pilot
                 <ArrowRight className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="btn btn-ghost text-lg px-8 py-4 w-full sm:w-auto"
+              >
+                Dashboard
+                <TrendingUp className="w-5 h-5" />
               </button>
               <button
                 onClick={() => navigate('/insights')}
                 className="btn btn-ghost text-lg px-8 py-4 w-full sm:w-auto"
               >
-                View Demo
+                Insights
                 <TrendingUp className="w-5 h-5" />
               </button>
             </div>
@@ -213,10 +220,10 @@ export const Home: React.FC = () => {
             Join the future of product management with AI-powered agents
           </p>
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/chat')}
             className="btn btn-primary text-lg px-12 py-4"
           >
-            Launch Dashboard
+            Start Chat with AI Co-Pilot
             <ArrowRight className="w-5 h-5" />
           </button>
         </motion.div>

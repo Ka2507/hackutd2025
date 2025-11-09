@@ -48,15 +48,23 @@ class NemotronBridge:
             logger.warning(f"Nemotron call limit reached ({self.max_calls})")
             return False
         
-        # Only use Nemotron for strategic, high-priority tasks
+        # Use Nemotron for strategic tasks or when priority is high
+        # Allow all agent task types since they're high-value
         high_value_tasks = [
             "orchestration",
             "strategic_planning",
             "complex_reasoning",
-            "multi_agent_coordination"
+            "multi_agent_coordination",
+            # Agent task types
+            "gtm", "strategy", "research", "dev", "prototype", 
+            "automation", "regulation", "risk", "prioritization",
+            "launch_plan", "marketing_strategy", "pricing", "messaging",
+            "idea_generation", "competitive_analysis", "user_research",
+            "user_stories", "mockup", "compliance_check", "workflow_automation"
         ]
         
-        return task_type in high_value_tasks and priority == "high"
+        # Allow if it's a high-value task OR if priority is high
+        return task_type in high_value_tasks or priority == "high"
     
     async def call_nemotron(
         self, 
@@ -64,7 +72,8 @@ class NemotronBridge:
         task_type: str = "general",
         priority: str = "medium",
         temperature: float = 0.7,
-        max_tokens: int = 1000
+        max_tokens: int = 1000,
+        model_override: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Call Nemotron API for reasoning
@@ -75,10 +84,13 @@ class NemotronBridge:
             priority: Task priority
             temperature: Sampling temperature
             max_tokens: Maximum tokens to generate
+            model_override: Override default model with agent-specific model
             
         Returns:
             Response from Nemotron
         """
+        # Use agent-specific model if provided, otherwise use default
+        model_to_use = model_override or self.model
         # Use cost-aware orchestrator to decide
         should_use, value_score = self.cost_orchestrator.should_use_nemotron(
             task_type=task_type,
@@ -95,10 +107,10 @@ class NemotronBridge:
             logger.info(f"Using local LLM instead of Nemotron for {task_type}")
             return await self._fallback_to_local(prompt)
         
-        # Check cache
-        cache_key = f"{prompt[:100]}_{task_type}"
+        # Check cache (include model in cache key for model-specific caching)
+        cache_key = f"{prompt[:100]}_{task_type}_{model_to_use}"
         if cache_key in self.response_cache:
-            logger.info("Returning cached Nemotron response")
+            logger.info(f"Returning cached Nemotron response for model: {model_to_use}")
             return self.response_cache[cache_key]
         
         # Make API call
@@ -114,11 +126,11 @@ class NemotronBridge:
                 }
                 
                 payload = {
-                    "model": self.model,
+                    "model": model_to_use,
                     "messages": [
                         {
                             "role": "system",
-                            "content": "You are Nemotron, a strategic AI reasoning engine helping coordinate multiple AI agents for product management tasks."
+                            "content": "You are Nemotron, a strategic AI reasoning engine helping coordinate multiple AI agents for product management tasks. Provide clear, actionable recommendations."
                         },
                         {
                             "role": "user",
@@ -126,21 +138,58 @@ class NemotronBridge:
                         }
                     ],
                     "temperature": temperature,
-                    "max_tokens": max_tokens
+                    "max_tokens": max_tokens,
+                    # For Ultra models, request final answer format
+                    "stream": False
                 }
                 
                 async with session.post(
                     f"{self.base_url}/chat/completions",
                     headers=headers,
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=30)
+                    timeout=aiohttp.ClientTimeout(total=120)  # Increased timeout for large models
                 ) as response:
                     if response.status == 200:
                         data = await response.json()
+                        # Safely extract response content
+                        # Ultra models may use reasoning_content instead of content
+                        content = None
+                        if "choices" in data and len(data["choices"]) > 0:
+                            choice = data["choices"][0]
+                            if "message" in choice:
+                                message = choice["message"]
+                                # Check for content first (standard response)
+                                if "content" in message and message["content"]:
+                                    content = message["content"]
+                                # Check for reasoning_content (Ultra models with reasoning mode)
+                                elif "reasoning_content" in message and message["reasoning_content"]:
+                                    content = message["reasoning_content"]
+                                    logger.info("Using reasoning_content from Ultra model response")
+                        
+                        if content is None or content == "":
+                            # Last resort: try to extract any text from the message
+                            if "choices" in data and len(data["choices"]) > 0:
+                                choice = data["choices"][0]
+                                message = choice.get("message", {})
+                                available_keys = [k for k in message.keys() if message.get(k) and k in ["reasoning_content", "content", "refusal"]]
+                                logger.warning(f"Content is None/empty. Available keys in message: {available_keys}")
+                                
+                                # Try each key in order of preference
+                                for key in ["reasoning_content", "content", "refusal"]:
+                                    if key in message and message[key]:
+                                        content = str(message[key])
+                                        logger.info(f"Extracted content from '{key}' field ({len(content)} chars)")
+                                        break
+                            
+                            if not content:
+                                error_msg = f"API response received but content extraction failed. Message keys: {list(data.get('choices', [{}])[0].get('message', {}).keys()) if data.get('choices') else 'no choices'}"
+                                logger.error(error_msg)
+                                content = error_msg
+                        
                         result = {
                             "success": True,
-                            "response": data["choices"][0]["message"]["content"],
-                            "model": self.model,
+                            "response": content,
+                            "model": model_to_use,
                             "usage": data.get("usage", {}),
                             "timestamp": datetime.now().isoformat()
                         }

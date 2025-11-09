@@ -15,6 +15,7 @@ from agents import (
     GtmAgent, AutomationAgent, RegulationAgent,
     RiskAssessmentAgent, PrioritizationAgent
 )
+from agents.agent_config import get_agents_in_lifecycle_order, get_agent_stage
 from .memory_manager import memory_manager
 from .nemotron_bridge import nemotron_bridge
 from .adaptive_workflow import AdaptiveWorkflowEngine
@@ -40,23 +41,38 @@ class TaskGraph:
     """
     
     def __init__(self):
-        """Initialize task graph with all agents"""
+        """Initialize task graph with all agents ordered by Product Management Lifecycle"""
         self.shared_context = {}
-        self.agents = {
+        
+        # Initialize all agents
+        agent_instances = {
             "strategy": StrategyAgent(self.shared_context),
             "research": ResearchAgent(self.shared_context),
+            "prioritization": PrioritizationAgent(self.shared_context),
+            "risk": RiskAssessmentAgent(self.shared_context),
+            "regulation": RegulationAgent(self.shared_context),
             "dev": DevAgent(self.shared_context),
             "prototype": PrototypeAgent(self.shared_context),
             "gtm": GtmAgent(self.shared_context),
             "automation": AutomationAgent(self.shared_context),
-            "regulation": RegulationAgent(self.shared_context),
-            "risk": RiskAssessmentAgent(self.shared_context),
-            "prioritization": PrioritizationAgent(self.shared_context)
         }
+        
+        # Order agents by Product Management Lifecycle
+        lifecycle_order = get_agents_in_lifecycle_order()
+        self.agents = {key: agent_instances[key] for key in lifecycle_order if key in agent_instances}
+        
+        # Store lifecycle order for reference
+        self.lifecycle_order = lifecycle_order
+        
         self.workflow_history = []
         self.adaptive_engine = AdaptiveWorkflowEngine(self.agents)
         self.collaboration = AgentCollaboration(self.agents)
-        logger.info("TaskGraph initialized with all agents including risk and prioritization")
+        
+        logger.info("TaskGraph initialized with agents ordered by Product Management Lifecycle:")
+        for i, agent_key in enumerate(lifecycle_order, 1):
+            if agent_key in self.agents:
+                agent = self.agents[agent_key]
+                logger.info(f"  {i}. {agent.name} - Stage {agent.lifecycle_stage}: {agent.stage_name} (Model: {agent.nemotron_model})")
     
     async def execute_workflow(
         self,
@@ -353,17 +369,46 @@ class TaskGraph:
         completed = sum(1 for step in steps if step.get("status") == "completed")
         failed = sum(1 for step in steps if step.get("status") == "failed")
         
+        # Extract key information from each step
+        key_outputs = []
+        agents_used = []
+        
+        for step in steps:
+            agent_name = step.get("agent", "Unknown")
+            agents_used.append(agent_name)
+            
+            step_result = step.get("result", {})
+            if step.get("status") == "completed" and step_result:
+                # Extract meaningful content from agent result
+                if isinstance(step_result, dict):
+                    # Try to get the main content/analysis
+                    content = step_result.get("launch_plan") or \
+                             step_result.get("marketing_strategy") or \
+                             step_result.get("strategic_analysis") or \
+                             step_result.get("research_synthesis") or \
+                             step_result.get("output") or \
+                             step_result.get("raw_response") or \
+                             str(step_result)[:500]  # Fallback to string representation
+                    
+                    key_outputs.append({
+                        "agent": agent_name,
+                        "summary": content[:1000] if isinstance(content, str) else str(content)[:1000],
+                        "full_result": step_result
+                    })
+                else:
+                    key_outputs.append({
+                        "agent": agent_name,
+                        "summary": str(step_result)[:500]
+                    })
+        
         return {
             "total_steps": len(steps),
             "completed": completed,
             "failed": failed,
-            "agents_used": [step.get("agent") for step in steps],
-            "execution_time": "simulated",
-            "key_outputs": [
-                step.get("result", {}) 
-                for step in steps 
-                if step.get("status") == "completed"
-            ]
+            "agents_used": list(set(agents_used)),  # Remove duplicates
+            "execution_time": "completed",
+            "key_outputs": key_outputs,
+            "summary_text": f"Workflow completed with {completed} successful steps and {failed} failures."
         }
     
     def _store_workflow_memory(
@@ -440,8 +485,10 @@ class TaskGraph:
         return {
             "workflow": "adaptive",
             "steps": result.get("nodes", []),
+            "nodes": result.get("nodes", []),  # Also include as nodes for consistency
             "adaptations": result.get("adaptations", []),
-            "summary": result.get("summary", {})
+            "summary": result.get("summary", {}),
+            "agents_used": [node.get("agent", "") for node in result.get("nodes", []) if node.get("agent")]
         }
 
 
