@@ -16,7 +16,6 @@ from db.context_store import context_store
 from orchestrator.task_graph import task_graph, WorkflowType
 from orchestrator.memory_manager import memory_manager
 from orchestrator.nemotron_bridge import nemotron_bridge
-from orchestrator.workflow_templates import workflow_template_engine
 from integrations import jira_api, slack_api, figma_api, reddit_api
 
 
@@ -30,7 +29,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -98,33 +97,14 @@ class AgentTaskRequest(BaseModel):
     project_id: Optional[int] = None
 
 
-class RefinementRequest(BaseModel):
-    agent_name: str
-    original_output: Dict[str, Any]
-    feedback: str
-    context: Optional[Dict[str, Any]] = None
-
-
-class RiskAssessmentRequest(BaseModel):
-    workflow_state: Dict[str, Any]
-    project_id: Optional[int] = None
-    risk_factors: Optional[List[str]] = None
-
-
-class PrioritizationRequest(BaseModel):
-    features: List[Dict[str, Any]]
-    context: Dict[str, Any]
-    method: str = "multi_factor"
-
-
 # API Routes
 
 @app.get("/")
 async def root():
     """Root endpoint"""
     return {
-        "app": settings.app_name,
-        "version": settings.app_version,
+        "app": settings.APP_NAME,
+        "version": settings.APP_VERSION,
         "status": "running",
         "docs": "/docs"
     }
@@ -385,56 +365,9 @@ async def list_workflows():
                 "type": WorkflowType.COMPLIANCE_CHECK.value,
                 "description": "Compliance and regulatory review",
                 "agents": ["regulation"]
-            },
-            {
-                "type": WorkflowType.ADAPTIVE.value,
-                "description": "AI-powered adaptive workflow (dynamically selects agents)",
-                "agents": ["adaptive"]
             }
         ]
     }
-
-
-@app.get("/api/v1/workflows/templates")
-async def list_workflow_templates():
-    """List available workflow templates"""
-    try:
-        templates = workflow_template_engine.list_templates()
-        return {
-            "success": True,
-            "templates": templates,
-            "count": len(templates)
-        }
-    except Exception as e:
-        logger.error(f"Error listing templates: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/v1/workflows/templates/recommend")
-async def recommend_template(project_description: str):
-    """Get recommended workflow template for a project"""
-    try:
-        context = {"description": project_description}
-        template = workflow_template_engine.get_recommended_template(context)
-        
-        if template:
-            return {
-                "success": True,
-                "recommended_template": {
-                    "name": template.name,
-                    "description": template.description,
-                    "agents": template.agents
-                }
-            }
-        else:
-            return {
-                "success": True,
-                "recommended_template": None,
-                "message": "No specific template recommended"
-            }
-    except Exception as e:
-        logger.error(f"Error recommending template: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/v1/workflows/history")
@@ -531,142 +464,6 @@ async def get_figma_file(file_key: str):
         return {"success": True, "data": data}
     except Exception as e:
         logger.error(f"Error getting Figma file: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# Advanced Features Endpoints
-
-@app.post("/api/v1/risk/assess")
-async def assess_risk(request: RiskAssessmentRequest):
-    """Assess project risks"""
-    try:
-        risk_agent = task_graph.agents.get("risk")
-        if not risk_agent:
-            raise HTTPException(status_code=404, detail="Risk assessment agent not found")
-        
-        result = await risk_agent.execute({
-            "workflow_state": request.workflow_state,
-            "project_id": request.project_id,
-            "risk_factors": request.risk_factors or []
-        })
-        
-        return {
-            "success": True,
-            "risk_assessment": result
-        }
-    except Exception as e:
-        logger.error(f"Error assessing risk: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/v1/prioritize")
-async def prioritize_features(request: PrioritizationRequest):
-    """Prioritize features using multi-factor analysis"""
-    try:
-        prioritization_agent = task_graph.agents.get("prioritization")
-        if not prioritization_agent:
-            raise HTTPException(status_code=404, detail="Prioritization agent not found")
-        
-        result = await prioritization_agent.execute({
-            "features": request.features,
-            "context": request.context,
-            "method": request.method
-        })
-        
-        return {
-            "success": True,
-            "prioritization": result
-        }
-    except Exception as e:
-        logger.error(f"Error prioritizing features: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/v1/refine")
-async def refine_agent_output(request: RefinementRequest):
-    """Refine agent output based on feedback"""
-    try:
-        agent = task_graph.agents.get(request.agent_name)
-        if not agent:
-            raise HTTPException(status_code=404, detail=f"Agent {request.agent_name} not found")
-        
-        refined = await task_graph.collaboration.request_refinement(
-            agent_name=request.agent_name,
-            original_output=request.original_output,
-            feedback=request.feedback,
-            context=request.context or {}
-        )
-        
-        return {
-            "success": True,
-            "refined_output": refined
-        }
-    except Exception as e:
-        logger.error(f"Error refining output: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/v1/budget/status")
-async def get_budget_status():
-    """Get current budget status"""
-    try:
-        budget_status = nemotron_bridge.cost_orchestrator.get_budget_status()
-        return {
-            "success": True,
-            "budget": budget_status
-        }
-    except Exception as e:
-        logger.error(f"Error getting budget status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/v1/projects/{project_id}/similar")
-async def get_similar_projects(project_id: int, limit: int = 5):
-    """Find similar past projects"""
-    try:
-        project = context_store.get_project(project_id)
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
-        
-        # Search for similar projects
-        similar = memory_manager.search(
-            query=project.get("description", project.get("name", "")),
-            top_k=limit,
-            filter_metadata={"type": "project"}
-        )
-        
-        return {
-            "success": True,
-            "similar_projects": [
-                {
-                    "project_id": mem["metadata"].get("project_id"),
-                    "name": mem["metadata"].get("name"),
-                    "similarity_score": mem.get("score", 0),
-                    "metadata": mem["metadata"]
-                }
-                for mem in similar
-            ],
-            "count": len(similar)
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error finding similar projects: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/v1/collaboration/history")
-async def get_collaboration_history(limit: int = 20):
-    """Get agent collaboration history"""
-    try:
-        history = task_graph.collaboration.get_collaboration_history(limit)
-        return {
-            "success": True,
-            "collaboration_history": history,
-            "count": len(history)
-        }
-    except Exception as e:
-        logger.error(f"Error getting collaboration history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
