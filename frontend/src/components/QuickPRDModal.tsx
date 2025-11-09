@@ -25,23 +25,26 @@ export const QuickPRDModal: React.FC<QuickPRDModalProps> = ({
 
     setIsGenerating(true);
     try {
-      // Run a lightweight workflow with just the product idea
-      const result = await apiClient.runTask(
-        'research_and_strategy',
-        {
-          feature: productIdea,
-          quick_mode: true,
-        },
-        undefined,
-        false // Don't use Nemotron for quick mode
-      );
-
-      // Generate quick PRD
-      const prdResult = await apiClient.generatePRD(result.workflow_id);
+      // Call Quick PRD API endpoint
+      const response = await fetch('http://localhost:8000/api/v1/generate_quick_prd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_idea: productIdea,
+          target_market: null,
+          key_features: null
+        })
+      });
       
-      onComplete(prdResult.prd);
-      setProductIdea('');
-      onClose();
+      const data = await response.json();
+      
+      if (data.success) {
+        onComplete(data.prd);
+        setProductIdea('');
+        onClose();
+      } else {
+        alert('Failed to generate PRD. Please try again.');
+      }
     } catch (error) {
       console.error('Error generating quick PRD:', error);
       alert('Failed to generate PRD. Please try again.');

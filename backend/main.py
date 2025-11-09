@@ -23,6 +23,8 @@ from integrations.jira_real import jira_integration
 from integrations.figma_real import figma_integration
 from integrations.slack_real import slack_integration
 from demo_scenarios import get_demo_scenario, list_demo_scenarios
+from templates.story_templates import get_template, get_all_templates, list_template_names, format_story_for_pnc, generate_pnc_demo_stories
+from templates.story_exporter import exporter
 
 # Initialize cost-aware orchestrator
 cost_orchestrator = CostAwareOrchestrator(total_budget=settings.total_budget)
@@ -874,6 +876,121 @@ async def jira_health_check():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ==================== STORY TEMPLATES & EXPORT (PNC Workshop Compatible) ====================
+
+@app.get("/api/v1/templates/list")
+async def list_story_templates():
+    """List all available story templates (PNC workshop format)"""
+    try:
+        template_names = list_template_names()
+        all_templates = get_all_templates()
+        
+        templates = []
+        for name in template_names:
+            template = all_templates[name]
+            templates.append({
+                "name": name,
+                "title": template.get("title", ""),
+                "priority": template.get("priority", ""),
+                "estimate": template.get("estimate", ""),
+                "tags": template.get("tags", []),
+                "epic": template.get("epic", "")
+            })
+        
+        return {
+            "success": True,
+            "templates": templates,
+            "count": len(templates),
+            "pnc_compatible": True
+        }
+    except Exception as e:
+        logger.error(f"Error listing templates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/templates/{template_name}")
+async def get_story_template(template_name: str):
+    """Get a specific story template"""
+    try:
+        template = get_template(template_name)
+        return {
+            "success": True,
+            "template": template,
+            "pnc_format": True
+        }
+    except Exception as e:
+        logger.error(f"Error getting template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/demo/pnc_stories")
+async def get_pnc_demo_stories():
+    """Get demo stories in PNC workshop format - shows our AI advantage"""
+    try:
+        stories = generate_pnc_demo_stories()
+        return {
+            "success": True,
+            "stories": stories,
+            "count": len(stories),
+            "generated_by": "ProdigyPM 9-Agent System",
+            "advantage": "Multi-agent review vs single LLM generation",
+            "pnc_compatible": True
+        }
+    except Exception as e:
+        logger.error(f"Error generating PNC demo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ExportRequest(BaseModel):
+    stories: List[Dict[str, Any]]
+    format: str  # csv, json, markdown, jira_csv
+    title: Optional[str] = "User Stories"
+
+
+@app.post("/api/v1/export/stories")
+async def export_stories(request: ExportRequest):
+    """Export stories in multiple formats (CSV, JSON, Markdown)"""
+    try:
+        logger.info(f"📤 Exporting {len(request.stories)} stories to {request.format}")
+        
+        if request.format == "csv":
+            content = exporter.to_csv(request.stories)
+            media_type = "text/csv"
+            filename = f"user_stories_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            
+        elif request.format == "markdown" or request.format == "md":
+            content = exporter.to_markdown(request.stories, request.title)
+            media_type = "text/markdown"
+            filename = f"user_stories_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            
+        elif request.format == "jira_csv":
+            content = exporter.to_jira_import_csv(request.stories)
+            media_type = "text/csv"
+            filename = f"jira_import_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            
+        elif request.format == "json":
+            content = exporter.to_json(request.stories, pretty=True)
+            media_type = "application/json"
+            filename = f"user_stories_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported format: {request.format}")
+        
+        return {
+            "success": True,
+            "content": content,
+            "media_type": media_type,
+            "filename": filename,
+            "pnc_workshop_compatible": request.format in ["csv", "markdown", "json"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error exporting stories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ==================== FIGMA INTEGRATION ENDPOINTS ====================
 
 @app.get("/api/v1/figma/file/{file_key}")
@@ -1203,6 +1320,116 @@ async def generate_prd(workflow_id: Optional[str] = None, project_id: Optional[i
         }
     except Exception as e:
         logger.error(f"Error generating PRD: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class QuickPRDRequest(BaseModel):
+    product_idea: str
+    target_market: Optional[str] = None
+    key_features: Optional[List[str]] = None
+
+
+@app.post("/api/v1/generate_quick_prd")
+async def generate_quick_prd(request: QuickPRDRequest):
+    """Generate a quick PRD from a single prompt - fast brainstorming mode"""
+    try:
+        logger.info(f"⚡ Generating Quick PRD for: {request.product_idea[:100]}")
+        
+        # Use Strategy Agent for fast PRD generation
+        strategy_agent = task_graph.agents.get("strategy")
+        if not strategy_agent:
+            raise HTTPException(status_code=404, detail="Strategy agent not found")
+        
+        # Build comprehensive prompt for quick PRD
+        prompt = f"""Generate a comprehensive Product Requirements Document (PRD) for this product idea:
+
+PRODUCT IDEA: {request.product_idea}
+{f"TARGET MARKET: {request.target_market}" if request.target_market else ""}
+{f"KEY FEATURES: {', '.join(request.key_features)}" if request.key_features else ""}
+
+Create a complete PRD with these sections:
+
+## 1. Executive Summary
+Brief overview of the product (2-3 paragraphs)
+
+## 2. Problem Statement
+What problem does this solve? Who has this problem?
+
+## 3. Goals & Success Metrics
+What are we trying to achieve? How will we measure success?
+
+## 4. Target Users
+Who will use this? User personas and segments.
+
+## 5. Key Features
+List of main features with brief descriptions
+
+## 6. User Stories
+3-5 key user stories with acceptance criteria
+
+## 7. Technical Requirements
+High-level technical approach and architecture
+
+## 8. Design Considerations
+UI/UX approach and design principles
+
+## 9. Go-to-Market Strategy
+Launch approach and marketing plan
+
+## 10. Timeline & Milestones
+Rough timeline with key milestones
+
+## 11. Risks & Mitigation
+Potential risks and how to address them
+
+Be specific, actionable, and detailed. Format with markdown."""
+        
+        # Call Strategy Agent (uses powerful model)
+        response = await strategy_agent._call_llm(prompt, use_nvidia=True, use_cache=False)
+        
+        # Get cost info
+        stats = nemotron_bridge.get_usage_stats()
+        last_call = stats['call_history'][-1] if stats['call_history'] else {}
+        
+        # Parse response into sections
+        prd = {
+            "title": f"PRD: {request.product_idea[:100]}",
+            "type": "quick",
+            "generated_at": datetime.now().isoformat(),
+            "product_idea": request.product_idea,
+            "content": response,
+            "model_used": last_call.get("model", "unknown"),
+            "generation_cost": last_call.get("cost", 0),
+            "sections": {
+                "executive_summary": {"content": "See full content"},
+                "problem_statement": {"content": "See full content"},
+                "goals": {"content": "See full content"},
+                "target_users": {"content": "See full content"},
+                "key_features": {"content": "See full content"},
+                "user_stories": {"content": "See full content"},
+                "technical_requirements": {"content": "See full content"},
+                "design_considerations": {"content": "See full content"},
+                "go_to_market": {"content": "See full content"},
+                "timeline": {"content": "See full content"},
+                "risks": {"content": "See full content"}
+            },
+            "metadata": {
+                "generation_mode": "quick",
+                "agents_used": ["Strategy Agent"],
+                "total_agents": 1,
+                "time_saved": "vs 9-agent detailed PRD"
+            }
+        }
+        
+        logger.info(f"✅ Quick PRD generated | Cost: ${last_call.get('cost', 0):.4f}")
+        
+        return {
+            "success": True,
+            "prd": prd
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating quick PRD: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
