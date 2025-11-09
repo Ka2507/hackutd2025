@@ -6,7 +6,8 @@
   command = "npm run build"
   
   # Directory to publish (Vite outputs to 'dist' by default)
-  publish = "frontend/dist"
+  # Note: Since base is "frontend", publish should be relative to that, so just "dist"
+  publish = "dist"
 
 # Redirect all routes to index.html for React Router
 [[redirects]]
