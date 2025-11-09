@@ -1,0 +1,42 @@
+# ProdigyPM Backend - Minimal Requirements for Railway/Render Deployment
+# This version excludes heavy ML dependencies that cause build timeouts
+
+# FastAPI and server (CORE - Required)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+websockets==12.0
+
+# Pydantic for data validation (CORE - Required)
+pydantic>=2.10.0
+pydantic-settings>=2.6.0
+
+# CORS and middleware (CORE - Required)
+python-dotenv==1.0.0
+
+# Database (CORE - Required)
+aiofiles==23.2.1
+
+# HTTP client for API calls (CORE - Required)
+aiohttp==3.9.1
+httpx==0.25.2
+
+# OpenAI client for Nemotron API (CORE - Required for AI features)
+openai>=1.0.0
+
+# Integrations (OPTIONAL - Can be installed later if needed)
+atlassian-python-api>=3.41.0  # Jira
+slack-sdk>=3.26.1  # Slack
+requests>=2.31.0  # For Figma API
+
+# Utilities (CORE - Required)
+python-dateutil==2.8.2
+
+# NOTE: Excluded heavy dependencies that cause build timeouts:
+# - sentence-transformers (downloads large ML models - several GB)
+# - numpy (included in other packages if needed)
+# - pinecone (can be installed later if vector store is needed)
+# 
+# These can be added later if specific features are required.
+# The app will work without them, just without RAG/embedding features.
+

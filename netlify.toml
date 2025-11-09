@@ -19,3 +19,8 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# IMPORTANT: Set VITE_API_URL in Netlify dashboard to your backend URL
+# Example: https://your-backend.railway.app or https://your-backend.onrender.com
+# Go to: Site settings > Build & deploy > Environment > Environment variables
+# Add: VITE_API_URL = https://your-backend-url.com
+

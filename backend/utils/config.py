@@ -20,11 +20,25 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     
+    def get_port(self) -> int:
+        """Get port from PORT environment variable (for production) or default."""
+        return int(os.getenv("PORT", self.api_port))
+    
     # CORS Settings
+    # Can be set via CORS_ORIGINS env var as comma-separated string
+    # Default includes localhost for development
     cors_origins: list = [
         "http://localhost:3000",
         "http://localhost:5173"
     ]
+    
+    def get_cors_origins(self) -> list:
+        """Get CORS origins from environment variable or default."""
+        cors_env = os.getenv("CORS_ORIGINS")
+        if cors_env:
+            # Split by comma and strip whitespace
+            return [origin.strip() for origin in cors_env.split(",")]
+        return self.cors_origins
     
     # AI Model Settings
     ollama_base_url: str = "http://localhost:11434"

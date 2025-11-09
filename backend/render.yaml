@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: prodigypm-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 8000
+      - key: CORS_ORIGINS
+        sync: false  # Set this in Render dashboard with your Netlify URL
+

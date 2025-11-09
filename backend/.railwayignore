@@ -1,0 +1,72 @@
+# Railway ignore file - excludes files from deployment to speed up builds
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Database files (if not needed in production)
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment files (should use Railway env vars)
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation (not needed in production)
+*.md
+!README.md
+
+# Development files
+run_simple.py
+setup_rag.py
+
+# Large model files (if any)
+*.bin
+*.pt
+*.pth
+*.h5
+*.ckpt
+
+# Git
+.git/
+.gitignore
+
+# Node modules (if any in backend)
+node_modules/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+

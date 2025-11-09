@@ -8,15 +8,29 @@ import sys
 import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from pinecone import Pinecone, ServerlessSpec
-from sentence_transformers import SentenceTransformer
+
+# Initialize logger first
+logger = logging.getLogger(__name__)
+
+# Optional imports - gracefully handle missing dependencies
+try:
+    from pinecone import Pinecone, ServerlessSpec
+    PINECONE_AVAILABLE = True
+except ImportError:
+    PINECONE_AVAILABLE = False
+    logger.warning("⚠️ Pinecone not available. RAG features will be disabled.")
+
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    logger.warning("⚠️ sentence-transformers not available. Embeddings will be disabled.")
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.config import settings
-
-logger = logging.getLogger(__name__)
 
 
 class PineconeRAG:
@@ -32,6 +46,14 @@ class PineconeRAG:
         self.index = None
         self.embedding_model = None
         self.dimension = 384  # all-MiniLM-L6-v2 dimension
+        
+        if not PINECONE_AVAILABLE:
+            logger.warning("⚠️ Pinecone library not installed. RAG features will be disabled.")
+            return
+        
+        if not SENTENCE_TRANSFORMERS_AVAILABLE:
+            logger.warning("⚠️ sentence-transformers library not installed. Embeddings will be disabled.")
+            return
         
         if self.api_key:
             try:
@@ -55,6 +77,9 @@ class PineconeRAG:
     
     def _setup_index(self):
         """Create or connect to Pinecone index."""
+        if not PINECONE_AVAILABLE:
+            return
+            
         try:
             existing_indexes = [index.name for index in self.pc.list_indexes()]
             
@@ -111,6 +136,9 @@ class PineconeRAG:
         Returns:
             Embedding vector
         """
+        if not PINECONE_AVAILABLE or not SENTENCE_TRANSFORMERS_AVAILABLE:
+            return []
+        
         if not self.embedding_model:
             logger.error("❌ Embedding model not initialized")
             return []
@@ -132,6 +160,9 @@ class PineconeRAG:
         Returns:
             Success status
         """
+        if not PINECONE_AVAILABLE or not SENTENCE_TRANSFORMERS_AVAILABLE:
+            return False
+        
         if not self.index:
             logger.error("❌ Pinecone index not initialized")
             return False
@@ -186,6 +217,9 @@ class PineconeRAG:
         Returns:
             List of matching documents with scores
         """
+        if not PINECONE_AVAILABLE or not SENTENCE_TRANSFORMERS_AVAILABLE:
+            return []
+        
         if not self.index:
             logger.error("❌ Pinecone index not initialized")
             return []
@@ -224,6 +258,8 @@ class PineconeRAG:
     
     def is_available(self) -> bool:
         """Check if RAG system is available."""
+        if not PINECONE_AVAILABLE or not SENTENCE_TRANSFORMERS_AVAILABLE:
+            return False
         return self.pc is not None and self.index is not None and self.embedding_model is not None
 
 
