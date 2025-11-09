@@ -19,6 +19,7 @@ from orchestrator.nemotron_bridge import nemotron_bridge
 from orchestrator.cost_aware_orchestrator import CostAwareOrchestrator
 from orchestrator.workflow_templates import workflow_template_engine
 from integrations import jira_api, slack_api, figma_api, reddit_api
+from demo_scenarios import get_demo_scenario, list_demo_scenarios
 
 # Initialize cost-aware orchestrator
 cost_orchestrator = CostAwareOrchestrator(total_budget=40.0)
@@ -763,6 +764,60 @@ async def generate_prd(workflow_id: Optional[str] = None, project_id: Optional[i
         }
     except Exception as e:
         logger.error(f"Error generating PRD: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/demo/scenarios")
+async def list_demos():
+    """List all available demo scenarios"""
+    try:
+        scenarios = list_demo_scenarios()
+        return {
+            "success": True,
+            "scenarios": scenarios
+        }
+    except Exception as e:
+        logger.error(f"Error listing demo scenarios: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/demo/run")
+async def run_demo_scenario(request: Dict[str, Any]):
+    """Run a pre-configured demo scenario"""
+    try:
+        scenario_key = request.get("scenario_key")
+        if not scenario_key:
+            raise HTTPException(status_code=400, detail="scenario_key is required")
+        
+        scenario = get_demo_scenario(scenario_key)
+        if not scenario:
+            raise HTTPException(status_code=404, detail=f"Scenario '{scenario_key}' not found")
+        
+        # Execute the workflow with demo data
+        result = await task_graph.execute_workflow(
+            workflow_type=scenario["workflow_type"],
+            input_data=scenario["input_data"],
+            project_id=None,
+            use_nemotron=True
+        )
+        
+        # Broadcast via WebSocket
+        await manager.broadcast({
+            "type": "demo_completed",
+            "scenario": scenario["name"],
+            "data": result
+        })
+        
+        return {
+            "success": True,
+            "scenario": scenario["name"],
+            "result": result,
+            "expected_outputs": scenario.get("expected_outputs", {})
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error running demo scenario: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

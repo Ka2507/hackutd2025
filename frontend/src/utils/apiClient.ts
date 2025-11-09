@@ -140,6 +140,19 @@ class APIClient {
     return response.data;
   }
 
+  // Demo Scenarios
+  async listDemoScenarios() {
+    const response = await this.client.get('/api/v1/demo/scenarios');
+    return response.data;
+  }
+
+  async runDemoScenario(scenarioKey: string) {
+    const response = await this.client.post('/api/v1/demo/run', {
+      scenario_key: scenarioKey,
+    });
+    return response.data;
+  }
+
   // Integrations
   async getJiraSprint(sprintId: string) {
     const response = await this.client.get(`/api/v1/integrations/jira/sprint/${sprintId}`);

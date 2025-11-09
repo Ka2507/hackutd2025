@@ -1,10 +1,11 @@
 /**
  * Dashboard - Main dashboard layout with agents and activity
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Layers, History, Network, TrendingUp } from 'lucide-react';
+import { Play, Layers, History, Network, TrendingUp, Rocket } from 'lucide-react';
 import { useAgents } from '@/hooks/useAgents';
+import apiClient from '../utils/apiClient';
 import AgentPanel from './AgentPanel';
 import TaskCard from './TaskCard';
 import ChatInterface from './ChatInterface';
@@ -17,6 +18,19 @@ export const Dashboard: React.FC = () => {
   const { agents, wsMessages, runWorkflow } = useAgents();
   const [activeTab, setActiveTab] = useState<'agents' | 'visualization' | 'impact' | 'chat' | 'activity' | 'templates'>('agents');
   const [selectedWorkflow, setSelectedWorkflow] = useState('');
+  const [demoScenarios, setDemoScenarios] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Load demo scenarios
+    apiClient.listDemoScenarios().then(res => {
+      if (res.scenarios) {
+        setDemoScenarios(Object.entries(res.scenarios).map(([key, value]: [string, any]) => ({
+          key,
+          ...value
+        })));
+      }
+    }).catch(console.error);
+  }, []);
 
   const workflows = [
     { value: 'adaptive', label: '🤖 Adaptive Workflow (AI-Powered)', description: 'Intelligently selects agents based on task' },
@@ -37,6 +51,14 @@ export const Dashboard: React.FC = () => {
       });
     } catch (error) {
       console.error('Error running workflow:', error);
+    }
+  };
+
+  const handleRunDemo = async (scenarioKey: string) => {
+    try {
+      await apiClient.runDemoScenario(scenarioKey);
+    } catch (error) {
+      console.error('Error running demo:', error);
     }
   };
 
@@ -137,6 +159,36 @@ export const Dashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Demo Scenarios */}
+      {demoScenarios.length > 0 && (
+        <div className="mb-8 card">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Rocket className="w-5 h-5 text-orange-400" />
+            Demo Scenarios
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {demoScenarios.map((scenario) => (
+              <button
+                key={scenario.key}
+                onClick={() => handleRunDemo(scenario.key)}
+                className="p-4 bg-dark-lighter hover:bg-dark-border rounded-lg border border-dark-border transition-all text-left group hover:border-neon-cyan"
+              >
+                <div className="font-medium text-white mb-2 group-hover:text-neon-cyan transition-colors">
+                  {scenario.name}
+                </div>
+                <div className="text-xs text-gray-400 line-clamp-2">
+                  {scenario.description}
+                </div>
+                <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                  <Play className="w-3 h-3" />
+                  <span>Click to run</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="mb-6">
