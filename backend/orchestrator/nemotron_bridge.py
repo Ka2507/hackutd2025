@@ -12,32 +12,36 @@ from utils.config import settings
 from utils.logger import logger
 
 
-# Model mapping based on agent needs
+# Model mapping based on agent needs (using correct NVIDIA model IDs)
 AGENT_MODEL_MAP = {
-    # High-complexity strategic reasoning - use Super model
+    # High-complexity strategic reasoning - use Super 49B model
     "strategy": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
     "risk_assessment": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
     
-    # Compliance and regulatory - use reasoning model
+    # Compliance and regulatory - use 70B instruct model  
     "regulation": "nvidia/llama-3.1-nemotron-70b-instruct",
     
-    # Standard agents - use efficient Nano model
+    # Standard agents - use 70B instruct (good balance of quality and cost)
     "research": "nvidia/llama-3.1-nemotron-70b-instruct",
     "dev": "nvidia/llama-3.1-nemotron-70b-instruct",
+    "development": "nvidia/llama-3.1-nemotron-70b-instruct",
     "prototype": "nvidia/llama-3.1-nemotron-70b-instruct",
     "gtm": "nvidia/llama-3.1-nemotron-70b-instruct",
+    "go-to-market": "nvidia/llama-3.1-nemotron-70b-instruct",
     "automation": "nvidia/llama-3.1-nemotron-70b-instruct",
     "prioritization": "nvidia/llama-3.1-nemotron-70b-instruct",
     "prd": "nvidia/llama-3.1-nemotron-70b-instruct",
+    "orchestration": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
     
     # Default
     "default": "nvidia/llama-3.1-nemotron-70b-instruct"
 }
 
-# Estimated costs per 1M tokens (approximate)
+# Estimated costs per 1M tokens (approximate - will track actual)
 MODEL_COSTS = {
     "nvidia/llama-3.3-nemotron-super-49b-v1.5": 0.003,  # $3 per 1M tokens
-    "nvidia/llama-3.1-nemotron-70b-instruct": 0.001,   # $1 per 1M tokens
+    "nvidia/llama-3.1-nemotron-70b-instruct": 0.001,   # $1 per 1M tokens  
+    "nvidia/nvidia-nemotron-nano-9b-v2": 0.0005,       # $0.50 per 1M tokens
 }
 
 

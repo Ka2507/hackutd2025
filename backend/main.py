@@ -313,16 +313,123 @@ async def execute_single_agent(agent_name: str, request: AgentTaskRequest):
                 for msg in conversation_history[-5:]  # Last 5 messages for context
             ])
             
-            prompt = f"""You are the {agent.name} in a product management AI system.
+            # Get agent-specific expertise and related agents
+            agent_expertise = {
+                "strategy": {
+                    "focus": "Market analysis, competitive intelligence, business strategy, market sizing, positioning",
+                    "redirect_to": {
+                        "user research": "Research Agent",
+                        "technical specs": "Dev Agent",
+                        "design": "Prototype Agent",
+                        "compliance": "Regulation Agent",
+                        "launch planning": "GTM Agent"
+                    }
+                },
+                "research": {
+                    "focus": "User insights, trend detection, competitive research, market validation, user feedback analysis",
+                    "redirect_to": {
+                        "strategy": "Strategy Agent",
+                        "development": "Dev Agent",
+                        "compliance": "Regulation Agent"
+                    }
+                },
+                "dev": {
+                    "focus": "User stories, technical specifications, backlog creation, sprint planning, acceptance criteria",
+                    "redirect_to": {
+                        "design": "Prototype Agent",
+                        "strategy": "Strategy Agent",
+                        "compliance": "Regulation Agent"
+                    }
+                },
+                "development": {
+                    "focus": "User stories, technical specifications, backlog creation, sprint planning, acceptance criteria",
+                    "redirect_to": {
+                        "design": "Prototype Agent",
+                        "strategy": "Strategy Agent"
+                    }
+                },
+                "prototype": {
+                    "focus": "Design mockups, wireframes, UI/UX specifications, Figma integration, component libraries",
+                    "redirect_to": {
+                        "development": "Dev Agent",
+                        "research": "Research Agent",
+                        "launch": "GTM Agent"
+                    }
+                },
+                "gtm": {
+                    "focus": "Go-to-market strategy, launch planning, pricing, marketing messaging, channel strategy",
+                    "redirect_to": {
+                        "strategy": "Strategy Agent",
+                        "research": "Research Agent",
+                        "compliance": "Regulation Agent"
+                    }
+                },
+                "go-to-market": {
+                    "focus": "Go-to-market strategy, launch planning, pricing, marketing messaging, channel strategy",
+                    "redirect_to": {
+                        "strategy": "Strategy Agent"
+                    }
+                },
+                "automation": {
+                    "focus": "Workflow automation, sprint reports, standup summaries, process optimization",
+                    "redirect_to": {
+                        "development": "Dev Agent",
+                        "strategy": "Strategy Agent"
+                    }
+                },
+                "regulation": {
+                    "focus": "Compliance requirements, regulatory review, risk assessment, privacy (GDPR, SOC2, PCI-DSS)",
+                    "redirect_to": {
+                        "risk": "Risk Assessment Agent",
+                        "development": "Dev Agent"
+                    }
+                },
+                "prioritization": {
+                    "focus": "Feature prioritization, RICE framework, value/effort analysis, roadmap planning",
+                    "redirect_to": {
+                        "strategy": "Strategy Agent",
+                        "development": "Dev Agent"
+                    }
+                },
+                "risk_assessment": {
+                    "focus": "Risk analysis, bottleneck prediction, mitigation strategies, technical and business risks",
+                    "redirect_to": {
+                        "compliance": "Regulation Agent",
+                        "strategy": "Strategy Agent"
+                    }
+                }
+            }
+            
+            expertise = agent_expertise.get(agent_name, {
+                "focus": agent.goal,
+                "redirect_to": {}
+            })
+            
+            redirects_text = "\n".join([
+                f"- For {topic} questions → suggest they ask the {target_agent}"
+                for topic, target_agent in expertise["redirect_to"].items()
+            ])
+            
+            prompt = f"""You are the {agent.name}, a specialized AI agent in a product management system.
 
-Your role: {agent.goal}
+YOUR EXPERTISE: {expertise["focus"]}
 
-Recent conversation:
-{context_messages}
+YOUR ROLE: {agent.goal}
 
-User's current question/input: {message}
+IMPORTANT INSTRUCTIONS:
+1. ONLY answer questions directly related to your expertise areas
+2. Provide detailed, specific, actionable insights in your domain
+3. If the user asks about topics OUTSIDE your expertise, politely redirect them:
+{redirects_text if redirects_text else "   - Direct them to the appropriate specialized agent"}
+4. Be professional, helpful, and specific
+5. Use examples and frameworks relevant to your domain
 
-Provide a helpful, detailed response based on your expertise. Be specific and actionable."""
+RECENT CONVERSATION:
+{context_messages if context_messages else "This is the start of the conversation."}
+
+USER'S QUESTION: {message}
+
+RESPONSE (answer if in your expertise, otherwise redirect):"""
             
             # Call NVIDIA API through the agent
             response_text = await agent._call_llm(prompt, use_nvidia=True)
