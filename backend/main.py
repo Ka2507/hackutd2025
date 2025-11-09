@@ -22,7 +22,7 @@ from integrations import jira_api, slack_api, figma_api, reddit_api
 from demo_scenarios import get_demo_scenario, list_demo_scenarios
 
 # Initialize cost-aware orchestrator
-cost_orchestrator = CostAwareOrchestrator(total_budget=40.0)
+cost_orchestrator = CostAwareOrchestrator(total_budget=settings.total_budget)
 
 
 # Initialize FastAPI app
@@ -301,8 +301,50 @@ async def execute_single_agent(agent_name: str, request: AgentTaskRequest):
             }
         })
         
-        # Execute agent
-        result = await agent.execute(request.input_data)
+        # Check if this is a chat message
+        if request.task_type == "chat":
+            # Handle interactive chat with agent
+            message = request.input_data.get("message", "")
+            conversation_history = request.input_data.get("conversation_history", [])
+            
+            # Build context-aware prompt
+            context_messages = "\n".join([
+                f"{msg['role'].title()}: {msg['content']}" 
+                for msg in conversation_history[-5:]  # Last 5 messages for context
+            ])
+            
+            prompt = f"""You are the {agent.name} in a product management AI system.
+
+Your role: {agent.goal}
+
+Recent conversation:
+{context_messages}
+
+User's current question/input: {message}
+
+Provide a helpful, detailed response based on your expertise. Be specific and actionable."""
+            
+            # Call NVIDIA API through the agent
+            response_text = await agent._call_llm(prompt, use_nvidia=True)
+            
+            # Get the last API call stats from nemotron_bridge
+            stats = nemotron_bridge.get_usage_stats()
+            last_call = stats['call_history'][-1] if stats['call_history'] else {}
+            
+            result = {
+                "agent": agent.name,
+                "timestamp": datetime.now().isoformat(),
+                "status": "completed",
+                "result": {
+                    "response": response_text,
+                    "model": last_call.get("model", "unknown"),
+                    "cost": last_call.get("cost", 0),
+                    "tokens": last_call.get("tokens", {})
+                }
+            }
+        else:
+            # Execute normal agent task
+            result = await agent.execute(request.input_data)
         
         # Store task in database if project specified
         if request.project_id:

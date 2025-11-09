@@ -13,12 +13,14 @@ import BudgetMeter from './BudgetMeter';
 import WorkflowTemplates from './WorkflowTemplates';
 import WorkflowVisualization from './WorkflowVisualization';
 import BeforeAfter from './BeforeAfter';
+import AgentChatModal from './AgentChatModal';
 
 export const Dashboard: React.FC = () => {
   const { agents, wsMessages, runWorkflow } = useAgents();
   const [activeTab, setActiveTab] = useState<'agents' | 'visualization' | 'impact' | 'chat' | 'activity' | 'templates'>('agents');
   const [selectedWorkflow, setSelectedWorkflow] = useState('');
   const [demoScenarios, setDemoScenarios] = useState<any[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<{key: string, name: string, description: string} | null>(null);
 
   useEffect(() => {
     // Load demo scenarios
@@ -233,7 +235,17 @@ export const Dashboard: React.FC = () => {
         {activeTab === 'agents' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(agents).map(([key, agent]) => (
-              <AgentPanel key={key} agent={agent} agentKey={key} />
+              <div
+                key={key}
+                onClick={() => setSelectedAgent({
+                  key: key,
+                  name: agent.name,
+                  description: agent.goal || `Specialized agent for ${key}`
+                })}
+                className="cursor-pointer"
+              >
+                <AgentPanel agent={agent} agentKey={key} />
+              </div>
             ))}
           </div>
         )}
@@ -343,6 +355,17 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Agent Chat Modal */}
+      {selectedAgent && (
+        <AgentChatModal
+          isOpen={!!selectedAgent}
+          onClose={() => setSelectedAgent(null)}
+          agentName={selectedAgent.name}
+          agentDescription={selectedAgent.description}
+          agentKey={selectedAgent.key}
+        />
+      )}
     </div>
   );
 };

@@ -34,7 +34,11 @@ class Settings(BaseSettings):
     nemotron_api_key: Optional[str] = None
     nemotron_base_url: str = "https://integrate.api.nvidia.com/v1"
     nemotron_model: str = "nvidia/nemotron-4-340b-instruct"
-    nemotron_max_calls: int = 3
+    nemotron_max_calls: int = 100
+    
+    # Budget Settings
+    total_budget: float = 60.0
+    budget_warning_threshold: float = 50.0
     
     # Vector Store Settings
     vector_store_type: str = "faiss"

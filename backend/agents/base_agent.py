@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.logger import logger
+from orchestrator.nemotron_bridge import nemotron_bridge
 
 
 class BaseAgent(ABC):
@@ -78,38 +79,48 @@ class BaseAgent(ABC):
         self.last_output = output
         return output
     
-    async def _call_llm(self, prompt: str, model: str = "local") -> str:
+    async def _call_llm(self, prompt: str, use_nvidia: bool = True) -> str:
         """
-        Call LLM (local Ollama or Nemotron)
+        Call LLM - Uses real NVIDIA Nemotron API
         
         Args:
             prompt: The prompt to send
-            model: "local" for Ollama or "nemotron" for NVIDIA API
+            use_nvidia: Whether to use NVIDIA API (default True)
             
         Returns:
             LLM response text
         """
-        # This is a placeholder - will be implemented with actual LLM calls
-        # For MVP, we'll simulate responses
-        logger.info(f"Agent {self.name} calling {model} LLM")
-        
-        # Simulate different agent responses
-        if "market" in prompt.lower() or "strategy" in prompt.lower():
-            return "Market analysis complete. Target segment identified: B2B SaaS companies."
-        elif "research" in prompt.lower() or "competitor" in prompt.lower():
-            return "Research synthesis: 3 key competitors identified with gaps in AI automation."
-        elif "user stor" in prompt.lower() or "backlog" in prompt.lower():
-            return "Generated 5 user stories with acceptance criteria and story points."
-        elif "prototype" in prompt.lower() or "design" in prompt.lower():
-            return "Prototype mockups created with modern UI/UX patterns."
-        elif "launch" in prompt.lower() or "gtm" in prompt.lower():
-            return "Go-to-market strategy: Multi-channel approach with focus on product-led growth."
-        elif "automat" in prompt.lower():
-            return "Automation workflows configured for sprint summaries and standup reports."
-        elif "regulation" in prompt.lower() or "compliance" in prompt.lower():
-            return "Compliance check complete. GDPR and SOC2 requirements identified."
+        if use_nvidia:
+            # Use real NVIDIA API through nemotron_bridge
+            agent_key = self.name.lower().replace("agent", "").strip()
+            
+            result = await nemotron_bridge.call_nemotron(
+                prompt=prompt,
+                agent_name=agent_key,
+                task_type=self._get_task_type(prompt),
+                temperature=0.7,
+                max_tokens=1500
+            )
+            
+            return result["response"]
         else:
-            return f"Agent {self.name} processing task with {model} model."
+            # Fallback for testing without API
+            return f"Agent {self.name} processed: {prompt[:50]}..."
+    
+    def _get_task_type(self, prompt: str) -> str:
+        """Determine task type from prompt for budget optimization"""
+        prompt_lower = prompt.lower()
+        
+        if any(word in prompt_lower for word in ["market", "strategy", "competitive"]):
+            return "strategic_planning"
+        elif any(word in prompt_lower for word in ["research", "user", "trend"]):
+            return "research"
+        elif any(word in prompt_lower for word in ["compliance", "regulation", "risk"]):
+            return "compliance"
+        elif any(word in prompt_lower for word in ["priorit", "rank", "score"]):
+            return "prioritization"
+        else:
+            return "general"
     
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}(name='{self.name}', status='{self.status}')>"
