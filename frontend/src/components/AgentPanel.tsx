@@ -45,9 +45,23 @@ const statusConfig = {
   },
 };
 
+// Model and specialization info for each agent
+const agentModelInfo: Record<string, { model: string; specialization: string }> = {
+  'StrategyAgent': { model: 'Super-49B', specialization: 'Strategic Reasoning' },
+  'RiskAssessmentAgent': { model: 'Super-49B', specialization: 'Risk Analysis' },
+  'RegulationAgent': { model: 'Super-49B', specialization: 'Compliance Expert' },
+  'ResearchAgent': { model: 'Nano-9B', specialization: 'Market Insights' },
+  'DevelopmentAgent': { model: 'Nano-9B', specialization: 'Technical Specs' },
+  'PrototypeAgent': { model: 'Nano-9B', specialization: 'Design Generation' },
+  'GTMAgent': { model: 'Nano-9B', specialization: 'Launch Strategy' },
+  'AutomationAgent': { model: 'Nano-9B', specialization: 'Workflow Optimization' },
+  'PrioritizationAgent': { model: 'Nano-9B', specialization: 'Feature Ranking' },
+};
+
 export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
   const config = statusConfig[agent.status as keyof typeof statusConfig] || statusConfig.idle;
   const StatusIcon = config.icon;
+  const modelInfo = agentModelInfo[agent.name] || { model: 'Nano-9B', specialization: 'General Purpose' };
 
   return (
     <motion.div
@@ -72,9 +86,20 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-base font-display font-semibold text-silver truncate">
-              {agent.name}
-            </h3>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-display font-semibold text-silver truncate">
+                {agent.name}
+              </h3>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded font-mono">
+                  {modelInfo.model}
+                </span>
+                <span className="text-xs text-silver/50">•</span>
+                <span className="text-xs text-purple-400/80">
+                  {modelInfo.specialization}
+                </span>
+              </div>
+            </div>
             <span className={`badge ${
               agent.status === 'completed' ? 'badge-success' :
               agent.status === 'running' ? 'badge-info' :
@@ -85,7 +110,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
             </span>
           </div>
           
-          <p className="text-xs text-silver/70 leading-relaxed mb-3">
+          <p className="text-xs text-silver/70 leading-relaxed mb-3 mt-2">
             {agent.goal}
           </p>
           

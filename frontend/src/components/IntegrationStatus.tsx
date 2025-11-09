@@ -109,7 +109,27 @@ export const IntegrationStatus: React.FC = () => {
         {/* Slack */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-pink-400" />
+            <svg className="w-4 h-4" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Top-left cyan pill */}
+              <rect x="6" y="6" width="14" height="5" rx="2.5" fill="#36C5F0"/>
+              {/* Middle-left cyan pill */}
+              <rect x="6" y="19" width="14" height="5" rx="2.5" fill="#36C5F0"/>
+              
+              {/* Top-right green pill */}
+              <rect x="34" y="6" width="5" height="14" rx="2.5" fill="#2EB67D"/>
+              {/* Middle-right green teardrop */}
+              <path d="M34 24 Q34 19 39 19 Q44 19 44 24 Q44 29 39 29 Q34 29 34 24" fill="#2EB67D"/>
+              
+              {/* Bottom-left magenta teardrop */}
+              <path d="M15 29 Q20 29 20 34 Q20 39 15 39 Q10 39 10 34 Q10 29 15 29" fill="#E01E5A"/>
+              {/* Bottom-left magenta pill */}
+              <rect x="6" y="34" width="5" height="14" rx="2.5" fill="#E01E5A"/>
+              
+              {/* Bottom-right gold pill */}
+              <rect x="19" y="43" width="14" height="5" rx="2.5" fill="#ECB22E"/>
+              {/* Bottom-right gold teardrop */}
+              <path d="M34 39 Q34 44 39 44 Q44 44 44 39 Q44 34 39 34 Q34 34 34 39" fill="#ECB22E"/>
+            </svg>
             <span className="text-sm text-gray-300">Slack</span>
           </div>
           <div className="flex items-center gap-2">
