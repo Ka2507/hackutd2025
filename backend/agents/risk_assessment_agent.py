@@ -9,7 +9,6 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from .base_agent import BaseAgent
-from orchestrator.memory_manager import memory_manager
 from orchestrator.nemotron_bridge import nemotron_bridge
 from utils.logger import logger
 
@@ -99,7 +98,8 @@ class RiskAssessmentAgent(BaseAgent):
         # Extract key characteristics from workflow state
         search_query = self._extract_search_query(workflow_state)
         
-        # Search memory for similar projects
+        # Search memory for similar projects (lazy import to avoid circular dependency)
+        from orchestrator.memory_manager import memory_manager
         similar = memory_manager.search(
             query=search_query,
             top_k=10,

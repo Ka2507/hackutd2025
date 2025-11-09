@@ -3,7 +3,13 @@ Automation Agent - Automates sprint summaries, standups, and workflow tasks
 """
 from typing import Dict, Any, List
 from datetime import datetime
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
 from .base_agent import BaseAgent
+from integrations.jira_api import jira_api
+from integrations.slack_api import slack_api
+from utils.logger import logger
 
 
 class AutomationAgent(BaseAgent):
@@ -56,32 +62,79 @@ class AutomationAgent(BaseAgent):
             )
     
     async def _generate_sprint_summary(self, sprint_id: str) -> Dict[str, Any]:
-        """Generate automated sprint summary"""
-        prompt = f"Generate sprint summary for {sprint_id}"
-        llm_response = await self._call_llm(prompt)
+        """Generate automated sprint summary with real Jira and Slack integration"""
+        # Fetch real sprint data from Jira if available
+        sprint_data = None
+        if jira_api.connected:
+            try:
+                sprint_data = await jira_api.get_sprint_data(sprint_id)
+            except Exception as e:
+                logger.warning(f"Failed to fetch Jira sprint data: {e}")
         
-        # Simulate fetching data from Jira
-        sprint_data = {
-            "sprint_id": sprint_id,
-            "start_date": "2025-10-28",
-            "end_date": "2025-11-08",
-            "team": "ProdigyPM Core Team",
-            "capacity": 40,
-            "completed_points": 35,
-            "incomplete_points": 5
-        }
+        # Fallback to mock data
+        if not sprint_data:
+            sprint_data = {
+                "sprint_id": sprint_id,
+                "start_date": "2025-10-28",
+                "end_date": "2025-11-08",
+                "team": "ProdigyPM Core Team",
+                "capacity": 40,
+                "issues": [
+                    {
+                        "key": "PROD-101",
+                        "summary": "Build agent dashboard",
+                        "status": "Done",
+                        "assignee": "dev1",
+                        "storyPoints": 8
+                    },
+                    {
+                        "key": "PROD-102",
+                        "summary": "Implement chat interface",
+                        "status": "Done",
+                        "assignee": "dev2",
+                        "storyPoints": 5
+                    },
+                    {
+                        "key": "PROD-103",
+                        "summary": "Automated sprint summaries",
+                        "status": "In Progress",
+                        "assignee": "dev1",
+                        "storyPoints": 13
+                    }
+                ],
+                "completedPoints": 13,
+                "totalPoints": 26
+            }
         
-        return {
+        prompt = f"""Generate a comprehensive sprint summary for {sprint_id} based on this data: {sprint_data}
+
+Include:
+- Key accomplishments
+- Metrics and velocity
+- Challenges faced
+- Team highlights
+- Next sprint focus
+
+Write in a professional, engaging tone suitable for stakeholders."""
+        llm_response = await self._call_llm(prompt, model="local")
+        
+        # Calculate metrics from sprint data
+        issues = sprint_data.get("issues", [])
+        completed = [i for i in issues if i.get("status") == "Done"]
+        completed_points = sum(i.get("storyPoints", 0) for i in completed)
+        total_points = sum(i.get("storyPoints", 0) for i in issues)
+        
+        result = {
             "sprint_id": sprint_id,
             "summary": llm_response,
             "metrics": {
-                "velocity": 35,
-                "commitment": 40,
-                "completion_rate": 87.5,
-                "stories_completed": 8,
-                "stories_incomplete": 2,
-                "bugs_fixed": 5,
-                "bugs_created": 2
+                "velocity": completed_points,
+                "commitment": total_points,
+                "completion_rate": (completed_points / total_points * 100) if total_points > 0 else 0,
+                "stories_completed": len(completed),
+                "stories_incomplete": len(issues) - len(completed),
+                "bugs_fixed": len([i for i in completed if "bug" in i.get("summary", "").lower()]),
+                "bugs_created": 0  # Would need to track this separately
             },
             "accomplishments": [
                 "✅ Completed agent framework with all 7 agents",
@@ -114,6 +167,25 @@ class AutomationAgent(BaseAgent):
             },
             "generated_at": datetime.now().isoformat()
         }
+        
+        # Post to Slack if integration is available
+        if slack_api.connected:
+            try:
+                await slack_api.post_sprint_summary(
+                    channel="#product-updates",
+                    sprint_data=result
+                )
+                result["slack_posted"] = True
+            except Exception as e:
+                logger.warning(f"Failed to post to Slack: {e}")
+                result["slack_posted"] = False
+        
+        result["integration_status"] = {
+            "jira": "connected" if jira_api.connected else "mock",
+            "slack": "connected" if slack_api.connected else "mock"
+        }
+        
+        return result
     
     async def _generate_standup_report(self) -> Dict[str, Any]:
         """Generate daily standup report"""

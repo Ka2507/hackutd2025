@@ -10,11 +10,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from agents import (
-    StrategyAgent, ResearchAgent, DevAgent, PrototypeAgent,
-    GtmAgent, AutomationAgent, RegulationAgent,
-    RiskAssessmentAgent, PrioritizationAgent
-)
+# Lazy imports to avoid circular dependency - agents are imported in __init__
 from .memory_manager import memory_manager
 from .nemotron_bridge import nemotron_bridge
 from .adaptive_workflow import AdaptiveWorkflowEngine
@@ -41,6 +37,13 @@ class TaskGraph:
     
     def __init__(self):
         """Initialize task graph with all agents"""
+        # Lazy import to avoid circular dependency
+        from agents import (
+            StrategyAgent, ResearchAgent, DevAgent, PrototypeAgent,
+            GtmAgent, AutomationAgent, RegulationAgent,
+            RiskAssessmentAgent, PrioritizationAgent
+        )
+        
         self.shared_context = {}
         self.agents = {
             "strategy": StrategyAgent(self.shared_context),

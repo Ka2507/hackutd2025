@@ -11,13 +11,13 @@ import './styles/index.css';
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<ProjectDashboard />} />
-          <Route path="/insights" element={<Insights />} />
-        </Routes>
-      </Router>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<ProjectDashboard />} />
+        <Route path="/insights" element={<Insights />} />
+      </Routes>
+    </Router>
     </ErrorBoundary>
   );
 }

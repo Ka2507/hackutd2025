@@ -45,6 +45,12 @@ DEMO_SCENARIOS = {
             "feature": "Real-time fraud alerts via push notifications",
             "market": "Banking - Security Features",
             "urgency": "high"
+        },
+        "expected_outputs": {
+            "strategy": "Competitive positioning strategy with response timeline",
+            "research": "Analysis of competitor feature and market response",
+            "dev": "Feature requirements to match/exceed competitor",
+            "gtm": "Response timeline and messaging strategy"
         }
     },
     "compliance_audit": {
@@ -55,6 +61,12 @@ DEMO_SCENARIOS = {
             "feature": "Open Banking API Integration",
             "regulations": ["GLBA", "PCI-DSS", "SOC 2", "GDPR"],
             "data_types": ["Customer financial data", "Transaction history", "Account information"]
+        },
+        "expected_outputs": {
+            "regulation": "Compliance checklist for all regulations",
+            "risk": "Risk assessment with mitigation strategies",
+            "dev": "Technical requirements for compliance",
+            "strategy": "Compliance-first implementation plan"
         }
     }
 }

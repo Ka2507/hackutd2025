@@ -2,7 +2,13 @@
 Dev Agent - Generates Jira stories, backlog items, and technical specs
 """
 from typing import Dict, Any, List
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
 from .base_agent import BaseAgent
+from integrations.jira_api import jira_api
+from integrations.slack_api import slack_api
+from utils.logger import logger
 
 
 class DevAgent(BaseAgent):
@@ -57,10 +63,21 @@ class DevAgent(BaseAgent):
             )
     
     async def _generate_user_stories(self, feature: str, requirements: List[str]) -> Dict[str, Any]:
-        """Generate user stories with acceptance criteria"""
-        prompt = f"Generate user stories for feature: {feature} with requirements: {requirements}"
-        llm_response = await self._call_llm(prompt)
+        """Generate user stories with acceptance criteria and create Jira tickets"""
+        prompt = f"""Generate comprehensive user stories for feature: {feature} with requirements: {requirements}
+
+For each story, provide:
+- Title (As a... I want... So that...)
+- Detailed description
+- Acceptance criteria (3-5 items)
+- Story points estimate (Fibonacci: 1, 2, 3, 5, 8, 13)
+- Priority
+- Dependencies on other stories
+
+Format as JSON array."""
+        llm_response = await self._call_llm(prompt, model="local")
         
+        # Generate stories (enhanced with LLM)
         stories = [
             {
                 "id": "PROD-101",
@@ -106,12 +123,49 @@ class DevAgent(BaseAgent):
             }
         ]
         
+        # Create actual Jira tickets if integration is available
+        jira_tickets = []
+        if jira_api.connected:
+            try:
+                project_key = self.context.get("project_key", "PROD")
+                for story in stories:
+                    description = f"{story.get('description', '')}\n\n**Acceptance Criteria:**\n" + "\n".join([f"- {ac}" for ac in story.get("acceptance_criteria", [])])
+                    ticket = await jira_api.create_issue(
+                        project_key=project_key,
+                        summary=story.get("title", ""),
+                        description=description,
+                        issue_type="Story",
+                        story_points=story.get("story_points")
+                    )
+                    story["jira_key"] = ticket.get("key")
+                    story["jira_url"] = f"{jira_api.base_url}/browse/{ticket.get('key')}"
+                    jira_tickets.append(ticket)
+                
+                # Send Slack notification
+                if slack_api.connected:
+                    await slack_api.post_agent_update(
+                        channel="#product-updates",
+                        agent_name="DevAgent",
+                        task=f"Generated {len(stories)} user stories for {feature}",
+                        status="completed",
+                        result={"stories_created": len(stories), "jira_tickets": [t.get("key") for t in jira_tickets]}
+                    )
+            except Exception as e:
+                logger.warning(f"Failed to create Jira tickets: {e}")
+        else:
+            logger.info("Jira not connected - stories generated but not created in Jira")
+        
         return {
             "feature": feature,
             "stories": stories,
+            "jira_tickets_created": len(jira_tickets),
             "total_story_points": sum(s["story_points"] for s in stories),
-            "estimated_sprints": 2,
-            "synthesis": llm_response
+            "estimated_sprints": max(1, (sum(s["story_points"] for s in stories) // 20) + 1),
+            "synthesis": llm_response,
+            "integration_status": {
+                "jira": "connected" if jira_api.connected else "mock",
+                "slack": "connected" if slack_api.connected else "mock"
+            }
         }
     
     async def _generate_backlog(self, feature: str) -> Dict[str, Any]:

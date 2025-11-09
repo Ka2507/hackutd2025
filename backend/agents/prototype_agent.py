@@ -2,7 +2,12 @@
 Prototype Agent - Integrates with Figma and creates design mockups
 """
 from typing import Dict, Any
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent))
 from .base_agent import BaseAgent
+from integrations.figma_api import figma_api
+from utils.logger import logger
 
 
 class PrototypeAgent(BaseAgent):
@@ -54,13 +59,20 @@ class PrototypeAgent(BaseAgent):
             )
     
     async def _create_wireframe(self, feature: str) -> Dict[str, Any]:
-        """Create wireframes for a feature"""
-        prompt = f"Design wireframe for: {feature}"
-        llm_response = await self._call_llm(prompt)
+        """Create wireframes for a feature and optionally create Figma file"""
+        prompt = f"""Design comprehensive wireframes for: {feature}
+
+Include:
+- Layout structure
+- Component hierarchy
+- User flow
+- Key interactions
+- Responsive breakpoints
+
+Format as detailed wireframe specification."""
+        llm_response = await self._call_llm(prompt, model="local")
         
-        return {
-            "feature": feature,
-            "wireframes": [
+        wireframes = [
                 {
                     "name": "Dashboard Layout",
                     "components": [
@@ -85,8 +97,38 @@ class PrototypeAgent(BaseAgent):
                     "figma_url": "https://figma.com/mockup/agent-card",
                     "notes": "Use neon cyan accent for active state"
                 }
-            ],
-            "design_notes": llm_response
+            ]
+        
+        # Create Figma file if integration is available
+        figma_files = []
+        if figma_api.connected:
+            try:
+                # Get or create Figma project
+                team_id = self.context.get("figma_team_id", "default")
+                projects = await figma_api.get_team_projects(team_id)
+                
+                if projects:
+                    project = projects[0]
+                    # Create prototype link for first wireframe
+                    if project.get("files"):
+                        file_key = project["files"][0]["key"]
+                        prototype_link = await figma_api.create_prototype_link(file_key, "0:1")
+                        wireframes[0]["figma_prototype_url"] = prototype_link.get("url")
+                        figma_files.append({
+                            "file_key": file_key,
+                            "prototype_url": prototype_link.get("url")
+                        })
+            except Exception as e:
+                logger.warning(f"Failed to create Figma prototype: {e}")
+        
+        return {
+            "feature": feature,
+            "wireframes": wireframes,
+            "figma_files": figma_files,
+            "design_notes": llm_response,
+            "integration_status": {
+                "figma": "connected" if figma_api.connected else "mock"
+            }
         }
     
     async def _create_mockup(self, feature: str, style: str) -> Dict[str, Any]:
