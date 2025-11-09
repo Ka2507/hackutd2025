@@ -100,6 +100,13 @@ class APIClient {
     return response.data;
   }
 
+  async updateBudget(totalBudget: number) {
+    const response = await this.client.put('/api/v1/budget/update', {
+      total_budget: totalBudget,
+    });
+    return response.data;
+  }
+
   // Risk Assessment
   async assessRisk(workflowState: any, projectId?: number, riskFactors?: string[]) {
     const response = await this.client.post('/api/v1/risk/assess', {
