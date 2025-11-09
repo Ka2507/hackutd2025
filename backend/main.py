@@ -693,11 +693,14 @@ async def generate_prd(workflow_id: Optional[str] = None, project_id: Optional[i
     try:
         # Get workflow history if workflow_id provided
         workflow_data = {}
+        steps = []
+        
         if workflow_id:
-            history = task_graph.get_workflow_history(limit=10)
+            history = task_graph.get_workflow_history(limit=20)
             for wf in history:
                 if wf.get("workflow_id") == workflow_id:
                     workflow_data = wf
+                    steps = workflow_data.get("results", {}).get("steps", [])
                     break
         
         # Generate PRD structure
@@ -710,35 +713,48 @@ async def generate_prd(workflow_id: Optional[str] = None, project_id: Optional[i
             "sections": {
                 "overview": {
                     "title": "Product Overview",
-                    "content": workflow_data.get("results", {}).get("steps", [{}])[0].get("output", {}).get("data", {}).get("refined_concept", "Product overview pending...")
+                    "content": steps[0].get("output", {}).get("data", {}) if len(steps) > 0 else {"note": "Run a workflow to populate this section"}
                 },
                 "market_analysis": {
                     "title": "Market Analysis",
-                    "content": workflow_data.get("results", {}).get("steps", [{}])[0].get("output", {}).get("data", {})
+                    "content": steps[0].get("output", {}).get("data", {}) if len(steps) > 0 else {"note": "Market analysis pending"}
                 },
                 "user_research": {
                     "title": "User Research",
-                    "content": workflow_data.get("results", {}).get("steps", [{}])[1].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 1 else {}
+                    "content": steps[1].get("output", {}).get("data", {}) if len(steps) > 1 else {"note": "User research pending"}
+                },
+                "risk_assessment": {
+                    "title": "Risk Assessment",
+                    "content": steps[2].get("output", {}).get("data", {}) if len(steps) > 2 else {"note": "Risk assessment pending"}
                 },
                 "technical_requirements": {
                     "title": "Technical Requirements",
-                    "content": workflow_data.get("results", {}).get("steps", [{}])[2].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 2 else {}
+                    "content": steps[3].get("output", {}).get("data", {}) if len(steps) > 3 else {"note": "Technical requirements pending"}
+                },
+                "prioritization": {
+                    "title": "Feature Prioritization",
+                    "content": steps[4].get("output", {}).get("data", {}) if len(steps) > 4 else {"note": "Prioritization pending"}
                 },
                 "design_specs": {
                     "title": "Design Specifications",
-                    "content": workflow_data.get("results", {}).get("steps", [{}])[3].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 3 else {}
+                    "content": steps[5].get("output", {}).get("data", {}) if len(steps) > 5 else {"note": "Design specs pending"}
                 },
                 "go_to_market": {
                     "title": "Go-to-Market Strategy",
-                    "content": workflow_data.get("results", {}).get("steps", [{}])[4].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 4 else {}
+                    "content": steps[6].get("output", {}).get("data", {}) if len(steps) > 6 else {"note": "GTM strategy pending"}
+                },
+                "automation": {
+                    "title": "Automation & Workflows",
+                    "content": steps[7].get("output", {}).get("data", {}) if len(steps) > 7 else {"note": "Automation pending"}
                 },
                 "compliance": {
                     "title": "Compliance & Security",
-                    "content": workflow_data.get("results", {}).get("steps", [{}])[5].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 5 else {}
+                    "content": steps[8].get("output", {}).get("data", {}) if len(steps) > 8 else {"note": "Compliance review pending"}
                 }
             },
             "generated_by": "ProdigyPM Multi-Agent System",
-            "agents_used": list(task_graph.agents.keys())
+            "agents_used": list(task_graph.agents.keys()),
+            "workflow_completed": len(steps) > 0
         }
         
         return {
