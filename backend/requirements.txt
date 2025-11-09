@@ -30,10 +30,10 @@ sentence-transformers>=2.2.2
 aiohttp==3.9.1
 httpx==0.25.2
 
-# Integrations (optional, for production)
-# atlassian-python-api==3.41.0  # Jira
-# slack-sdk==3.26.1  # Slack
-# praw==7.7.1  # Reddit
+# Integrations
+atlassian-python-api>=3.41.0  # Jira
+slack-sdk>=3.26.1  # Slack
+requests>=2.31.0  # For Figma API
 
 # Utilities
 python-dateutil==2.8.2

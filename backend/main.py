@@ -19,6 +19,9 @@ from orchestrator.nemotron_bridge import nemotron_bridge
 from orchestrator.cost_aware_orchestrator import CostAwareOrchestrator
 from orchestrator.workflow_templates import workflow_template_engine
 from integrations import jira_api, slack_api, figma_api, reddit_api
+from integrations.jira_real import jira_integration
+from integrations.figma_real import figma_integration
+from integrations.slack_real import slack_integration
 from demo_scenarios import get_demo_scenario, list_demo_scenarios
 
 # Initialize cost-aware orchestrator
@@ -431,6 +434,16 @@ USER'S QUESTION: {message}
 
 RESPONSE (answer if in your expertise, otherwise redirect):"""
             
+            # Special handling for Prototype Agent design requests
+            mockup_data = None
+            if agent_name == "prototype" and any(keyword in message.lower() for keyword in ["mockup", "design", "wireframe", "ui", "interface", "screen"]):
+                logger.info(f"🎨 Detected design request for Prototype Agent")
+                try:
+                    mockup_data = await agent.generate_mockup_from_chat(message)
+                    logger.info(f"✅ Generated mockup with {len(mockup_data.get('screens', []))} screens")
+                except Exception as e:
+                    logger.error(f"❌ Error generating mockup: {e}")
+            
             # Call NVIDIA API through the agent
             response_text = await agent._call_llm(prompt, use_nvidia=True)
             
@@ -446,7 +459,8 @@ RESPONSE (answer if in your expertise, otherwise redirect):"""
                     "response": response_text,
                     "model": last_call.get("model", "unknown"),
                     "cost": last_call.get("cost", 0),
-                    "tokens": last_call.get("tokens", {})
+                    "tokens": last_call.get("tokens", {}),
+                    "mockup": mockup_data  # Include mockup if generated
                 }
             }
         else:
@@ -674,6 +688,282 @@ async def get_figma_file(file_key: str):
         return {"success": True, "data": data}
     except Exception as e:
         logger.error(f"Error getting Figma file: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== COMPREHENSIVE JIRA INTEGRATION ENDPOINTS ====================
+
+class JiraStoryRequest(BaseModel):
+    project_key: str
+    feature_description: str
+    create_in_jira: bool = True
+
+
+class JiraEpicRequest(BaseModel):
+    project_key: str
+    epic_name: str
+    description: str
+    create_in_jira: bool = True
+
+
+class JiraBulkCreateRequest(BaseModel):
+    project_key: str
+    prd_content: Dict[str, Any]
+    create_epic: bool = True
+    create_stories: bool = True
+
+
+@app.post("/api/v1/jira/create_stories")
+async def create_jira_stories_api(request: JiraStoryRequest):
+    """Generate and create user stories in Jira using AI"""
+    try:
+        dev_agent = task_graph.agents.get("dev")
+        if not dev_agent:
+            raise HTTPException(status_code=404, detail="Dev agent not found")
+        
+        result = await dev_agent.create_jira_stories(
+            project_key=request.project_key,
+            feature_description=request.feature_description,
+            create_in_jira=request.create_in_jira
+        )
+        
+        return {
+            "success": True,
+            **result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating Jira stories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/jira/create_epic")
+async def create_jira_epic_api(request: JiraEpicRequest):
+    """Create an epic in Jira"""
+    try:
+        dev_agent = task_graph.agents.get("dev")
+        if not dev_agent:
+            raise HTTPException(status_code=404, detail="Dev agent not found")
+        
+        result = await dev_agent.create_jira_epic(
+            project_key=request.project_key,
+            epic_name=request.epic_name,
+            description=request.description,
+            create_in_jira=request.create_in_jira
+        )
+        
+        return {
+            "success": True,
+            **result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating Jira epic: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/jira/bulk_create_from_prd")
+async def bulk_create_from_prd_api(request: JiraBulkCreateRequest):
+    """Create complete Jira structure (epic + stories) from a PRD"""
+    try:
+        dev_agent = task_graph.agents.get("dev")
+        if not dev_agent:
+            raise HTTPException(status_code=404, detail="Dev agent not found")
+        
+        result = await dev_agent.bulk_create_from_prd(
+            project_key=request.project_key,
+            prd_content=request.prd_content,
+            create_epic=request.create_epic,
+            create_stories=request.create_stories
+        )
+        
+        return {
+            "success": True,
+            **result
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating from PRD: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/jira/sprint/{sprint_id}/status")
+async def get_sprint_status_api(sprint_id: int):
+    """Get detailed sprint status"""
+    try:
+        sprint_data = await jira_integration.get_sprint_issues(sprint_id)
+        return {
+            "success": True,
+            **sprint_data
+        }
+    except Exception as e:
+        logger.error(f"Error getting sprint status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/jira/backlog/{project_key}")
+async def get_backlog_api(project_key: str, max_results: int = 50):
+    """Get backlog for a project"""
+    try:
+        backlog = await jira_integration.get_backlog(project_key, max_results)
+        return {
+            "success": True,
+            "backlog": backlog,
+            "count": len(backlog)
+        }
+    except Exception as e:
+        logger.error(f"Error getting backlog: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/jira/epic/{epic_key}/stories")
+async def get_epic_stories_api(epic_key: str):
+    """Get all stories in an epic"""
+    try:
+        stories = await jira_integration.get_epic_stories(epic_key)
+        return {
+            "success": True,
+            "epic_key": epic_key,
+            "stories": stories,
+            "count": len(stories)
+        }
+    except Exception as e:
+        logger.error(f"Error getting epic stories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/jira/issue/{issue_key}/comment")
+async def add_jira_comment_api(issue_key: str, comment: str):
+    """Add a comment to a Jira issue"""
+    try:
+        result = await jira_integration.add_comment(issue_key, comment)
+        return {
+            "success": True,
+            **result
+        }
+    except Exception as e:
+        logger.error(f"Error adding comment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/jira/issue/{issue_key}/transition")
+async def transition_issue_api(issue_key: str, transition_name: str):
+    """Transition a Jira issue to new status"""
+    try:
+        result = await jira_integration.transition_issue(issue_key, transition_name)
+        return {
+            "success": True,
+            **result
+        }
+    except Exception as e:
+        logger.error(f"Error transitioning issue: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/jira/health")
+async def jira_health_check():
+    """Check Jira integration health"""
+    try:
+        health = jira_integration.health_check()
+        return {
+            "success": True,
+            **health
+        }
+    except Exception as e:
+        logger.error(f"Error checking Jira health: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== FIGMA INTEGRATION ENDPOINTS ====================
+
+@app.get("/api/v1/figma/file/{file_key}")
+async def get_figma_file_api(file_key: str):
+    """Get Figma file data"""
+    try:
+        data = await figma_integration.get_file(file_key)
+        return {
+            "success": True,
+            "file": data
+        }
+    except Exception as e:
+        logger.error(f"Error getting Figma file: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/figma/file/{file_key}/comment")
+async def post_figma_comment_api(file_key: str, message: str):
+    """Post comment to Figma file"""
+    try:
+        result = await figma_integration.create_comment(file_key, message)
+        return {
+            "success": True,
+            **result
+        }
+    except Exception as e:
+        logger.error(f"Error posting Figma comment: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/figma/health")
+async def figma_health_check():
+    """Check Figma integration health"""
+    try:
+        health = figma_integration.health_check()
+        return {
+            "success": True,
+            **health
+        }
+    except Exception as e:
+        logger.error(f"Error checking Figma health: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== SLACK INTEGRATION ENDPOINTS ====================
+
+class SlackMessageRequest(BaseModel):
+    channel: str
+    message: str
+
+
+@app.post("/api/v1/slack/send_message")
+async def send_slack_message_api(request: SlackMessageRequest):
+    """Send a message to Slack"""
+    try:
+        result = await slack_integration.send_message(request.channel, request.message)
+        return {
+            "success": True,
+            **result
+        }
+    except Exception as e:
+        logger.error(f"Error sending Slack message: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/slack/send_sprint_report")
+async def send_sprint_report_slack_api(channel: str, sprint_data: Dict[str, Any]):
+    """Send sprint report to Slack"""
+    try:
+        result = await slack_integration.send_sprint_report(channel, sprint_data)
+        return {
+            "success": True,
+            **result
+        }
+    except Exception as e:
+        logger.error(f"Error sending sprint report: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/v1/slack/health")
+async def slack_health_check():
+    """Check Slack integration health"""
+    try:
+        health = slack_integration.health_check()
+        return {
+            "success": True,
+            **health
+        }
+    except Exception as e:
+        logger.error(f"Error checking Slack health: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

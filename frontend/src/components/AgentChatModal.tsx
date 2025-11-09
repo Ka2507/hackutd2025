@@ -7,11 +7,13 @@ import { X, Send, ArrowLeft, Loader2, Sparkles, ChevronDown, ChevronUp, Brain } 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import apiClient from '../utils/apiClient';
+import MockupViewer from './MockupViewer';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
   thinking?: string;
+  mockup?: any;
   timestamp: Date;
   cost?: number;
   model?: string;
@@ -98,10 +100,14 @@ export const AgentChatModal: React.FC<AgentChatModalProps> = ({
         aiResponse = aiResponse.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
       }
       
+      // Extract mockup data if present
+      const mockupData = resultData.mockup || null;
+      
       const assistantMessage: Message = {
         role: 'assistant',
         content: aiResponse,
         thinking,
+        mockup: mockupData,
         timestamp: new Date(),
         cost: resultData.cost,
         model: resultData.model
@@ -294,6 +300,12 @@ export const AgentChatModal: React.FC<AgentChatModalProps> = ({
                       {message.content}
                     </ReactMarkdown>
                   </div>
+                  
+                  {/* Mockup Viewer - Show if mockup data present */}
+                  {message.mockup && (
+                    <MockupViewer mockup={message.mockup} />
+                  )}
+                  
                   {message.cost !== undefined && message.cost > 0 && (
                     <div className="mt-2 text-xs text-gray-500">
                       Cost: ${message.cost.toFixed(4)}
