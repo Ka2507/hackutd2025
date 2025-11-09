@@ -14,7 +14,7 @@ class FigmaAPI:
     """Mock Figma API integration"""
     
     def __init__(self):
-        self.access_token = settings.FIGMA_ACCESS_TOKEN
+        self.access_token = settings.figma_access_token
         self.connected = bool(self.access_token)
         
         if not self.connected:
