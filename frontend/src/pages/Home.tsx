@@ -213,30 +213,6 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="max-w-4xl mx-auto px-6 py-20 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, duration: 0.8 }}
-          className="card gradient-border p-12"
-        >
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-100 mb-4">
-            Ready to Transform Your Workflow?
-          </h2>
-          <p className="text-lg text-gray-400 mb-8">
-            Join the future of product management with AI-powered agents
-          </p>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="btn btn-primary text-lg px-12 py-4"
-          >
-            Launch Dashboard
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </motion.div>
-      </div>
-
       {/* PRD Modals */}
       <PRDSelectionModal
         isOpen={showPRDSelection}
