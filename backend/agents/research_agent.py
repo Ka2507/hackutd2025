@@ -1,19 +1,32 @@
 """
 Research Agent - Synthesizes competitor data and user feedback
+
+Enhanced with RAG (Retrieval-Augmented Generation) using Pinecone.
 """
+import logging
+import sys
+import os
 from typing import Dict, Any, List
 from .base_agent import BaseAgent
 
+# Add parent directory to path for RAG imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from rag.pinecone_rag import pinecone_rag
+
+logger = logging.getLogger(__name__)
+
 
 class ResearchAgent(BaseAgent):
-    """Agent specialized in research, data synthesis, and user insights"""
+    """Agent specialized in research, data synthesis, and user insights with RAG"""
     
     def __init__(self, context: Dict[str, Any] = None):
         super().__init__(
             name="ResearchAgent",
-            goal="Synthesize research data, user feedback, and market insights",
+            goal="Synthesize research data, user feedback, and market insights using RAG",
             context=context
         )
+        self.rag_enabled = pinecone_rag.is_available()
     
     async def execute(self, task_input: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -54,118 +67,169 @@ class ResearchAgent(BaseAgent):
                 {"task_type": task_type, "error": True}
             )
     
+    async def _retrieve_knowledge(self, query: str, top_k: int = 3) -> str:
+        """
+        Retrieve relevant knowledge from RAG system.
+        
+        Args:
+            query: Search query
+            top_k: Number of documents to retrieve
+            
+        Returns:
+            Formatted context from retrieved documents
+        """
+        if not self.rag_enabled:
+            logger.info("⚠️ RAG not enabled, using LLM only")
+            return ""
+        
+        try:
+            results = pinecone_rag.search(query, top_k=top_k)
+            
+            if not results:
+                logger.info(f"🔍 No relevant knowledge found for: {query}")
+                return ""
+            
+            # Format retrieved documents
+            context_parts = []
+            for i, doc in enumerate(results, 1):
+                context_parts.append(
+                    f"**Source {i}** (relevance: {doc['score']:.2f}):\n{doc['text']}\n"
+                )
+            
+            context = "\n---\n".join(context_parts)
+            logger.info(f"✅ Retrieved {len(results)} relevant documents")
+            return context
+            
+        except Exception as e:
+            logger.error(f"❌ Error retrieving knowledge: {e}")
+            return ""
+    
     async def _user_research(self, query: str, sources: List[str]) -> Dict[str, Any]:
-        """Research user needs and pain points"""
-        prompt = f"Analyze user pain points and needs for: {query}"
+        """Research user needs and pain points with RAG"""
+        # Retrieve relevant knowledge
+        rag_context = await self._retrieve_knowledge(f"user research personas pain points {query}", top_k=3)
+        
+        # Build enhanced prompt with RAG context
+        if rag_context:
+            prompt = f"""You are analyzing user research for: {query}
+
+**Relevant Market Knowledge:**
+{rag_context}
+
+**Task:** Based on the above context and your expertise, provide:
+1. Key user pain points
+2. User needs and desires
+3. Important user segments
+4. Actionable insights for product development
+
+Provide a comprehensive analysis."""
+        else:
+            prompt = f"Analyze user pain points and needs for: {query}"
+        
         llm_response = await self._call_llm(prompt)
         
         return {
             "query": query,
             "sources_analyzed": sources,
-            "pain_points": [
-                "Too much time spent on repetitive PM tasks",
-                "Difficulty synthesizing feedback from multiple sources",
-                "Context switching between tools",
-                "Hard to track long-term strategic goals"
-            ],
-            "user_needs": [
-                "AI assistance for routine tasks",
-                "Unified dashboard for all PM activities",
-                "Smart insights from historical data",
-                "Automated reporting and summaries"
-            ],
-            "quotes": [
-                "I spend 50% of my time on admin work instead of strategy",
-                "I wish I had an AI copilot for product decisions",
-                "Too many tools, not enough integration"
-            ],
             "synthesis": llm_response,
-            "confidence_score": 0.85
+            "rag_enabled": self.rag_enabled,
+            "knowledge_sources_used": 3 if rag_context else 0,
+            "confidence_score": 0.92 if rag_context else 0.75
         }
     
     async def _competitor_research(self, query: str) -> Dict[str, Any]:
-        """Research competitor products and features"""
-        prompt = f"Research competitor landscape for: {query}"
+        """Research competitor products and features with RAG"""
+        # Retrieve relevant competitive intelligence
+        rag_context = await self._retrieve_knowledge(f"competitive intelligence market analysis {query}", top_k=3)
+        
+        if rag_context:
+            prompt = f"""You are analyzing the competitive landscape for: {query}
+
+**Relevant Market Intelligence:**
+{rag_context}
+
+**Task:** Based on the above context, provide:
+1. Key competitors and their positioning
+2. Feature comparison and gaps
+3. Pricing strategies
+4. Market opportunities for differentiation
+
+Provide a detailed competitive analysis."""
+        else:
+            prompt = f"Research competitor landscape for: {query}"
+        
         llm_response = await self._call_llm(prompt)
         
         return {
             "query": query,
-            "competitors_analyzed": [
-                "ProductBoard", "Aha!", "Linear", "Jira Product Discovery"
-            ],
-            "feature_comparison": {
-                "ai_assistance": {
-                    "ProdigyPM": "Multi-agent reasoning",
-                    "competitors": "Basic AI suggestions"
-                },
-                "automation": {
-                    "ProdigyPM": "Full workflow automation",
-                    "competitors": "Limited automation"
-                },
-                "integrations": {
-                    "ProdigyPM": "Deep integration with dev tools",
-                    "competitors": "Basic integrations"
-                }
-            },
-            "pricing_analysis": {
-                "average_price": "$49/user/month",
-                "pricing_model": "Per-seat SaaS",
-                "enterprise_deals": "Custom pricing"
-            },
-            "market_positioning": llm_response,
-            "opportunities": [
-                "AI-first approach underserved",
-                "Automation gap in market",
-                "Local LLM privacy advantage"
-            ]
+            "analysis": llm_response,
+            "rag_enabled": self.rag_enabled,
+            "knowledge_sources_used": 3 if rag_context else 0,
+            "confidence_score": 0.88 if rag_context else 0.70
         }
     
     async def _trend_analysis(self, query: str) -> Dict[str, Any]:
-        """Analyze market and technology trends"""
-        prompt = f"Analyze trends related to: {query}"
+        """Analyze market and technology trends with RAG"""
+        # Retrieve relevant trend data
+        rag_context = await self._retrieve_knowledge(f"market trends technology analysis {query}", top_k=4)
+        
+        if rag_context:
+            prompt = f"""You are analyzing market and technology trends for: {query}
+
+**Relevant Market Trend Data:**
+{rag_context}
+
+**Task:** Based on the above context, provide:
+1. Emerging market trends
+2. Technology adoption patterns
+3. Growth forecasts and predictions
+4. Strategic recommendations
+
+Provide a comprehensive trend analysis."""
+        else:
+            prompt = f"Analyze trends related to: {query}"
+        
         llm_response = await self._call_llm(prompt)
         
         return {
             "query": query,
-            "emerging_trends": [
-                "AI agents becoming mainstream",
-                "Product-led growth strategies",
-                "Remote-first product teams",
-                "Data-driven decision making"
-            ],
-            "technology_trends": [
-                "Local LLM adoption for privacy",
-                "Multi-agent orchestration",
-                "RAG (Retrieval Augmented Generation)",
-                "Vector databases for context"
-            ],
-            "search_volume_trends": {
-                "ai product management": "+150% YoY",
-                "product automation": "+85% YoY",
-                "ai copilot": "+200% YoY"
-            },
             "analysis": llm_response,
-            "forecast": "Strong growth expected in AI-powered PM tools"
+            "rag_enabled": self.rag_enabled,
+            "knowledge_sources_used": 4 if rag_context else 0,
+            "confidence_score": 0.90 if rag_context else 0.72
         }
     
     async def _general_research(self, query: str, sources: List[str]) -> Dict[str, Any]:
-        """General research synthesis"""
-        prompt = f"Research and synthesize information about: {query} from {sources}"
+        """General research synthesis with RAG"""
+        # Retrieve relevant knowledge
+        rag_context = await self._retrieve_knowledge(query, top_k=3)
+        
+        if rag_context:
+            prompt = f"""You are conducting research on: {query}
+
+**Relevant Knowledge Base:**
+{rag_context}
+
+**Sources to consider:** {', '.join(sources)}
+
+**Task:** Based on the above context and sources, provide:
+1. Key findings and insights
+2. Data-backed conclusions
+3. Actionable recommendations
+4. Areas requiring further investigation
+
+Provide a comprehensive research synthesis."""
+        else:
+            prompt = f"Research and synthesize information about: {query} from {sources}"
+        
         llm_response = await self._call_llm(prompt)
         
         return {
             "query": query,
             "sources": sources,
-            "key_findings": [
-                "Strong demand for AI-powered PM tools",
-                "Integration with existing tools is critical",
-                "Privacy and data security are top concerns"
-            ],
             "synthesis": llm_response,
-            "recommendations": [
-                "Focus on workflow automation",
-                "Emphasize local-first AI for privacy",
-                "Build deep integrations early"
-            ]
+            "rag_enabled": self.rag_enabled,
+            "knowledge_sources_used": 3 if rag_context else 0,
+            "confidence_score": 0.85 if rag_context else 0.68
         }
 

@@ -17,16 +17,14 @@ python-dotenv==1.0.0
 aiofiles==23.2.1
 
 # AI/ML Libraries
-# Note: Install locally for actual LLM usage
-# ollama  # Install via: pip install ollama
-# openai  # For Nemotron API calls if needed
+openai>=1.0.0  # For Nemotron API and embeddings
+numpy>=1.24.0
 
-# Vector store (optional, for production)
-# faiss-cpu==1.7.4  # Uncomment for FAISS support
-# pinecone-client==2.2.4  # Uncomment for Pinecone support
+# Vector store for RAG
+pinecone>=5.0.0
 
-# For embeddings (optional, for production)
-# sentence-transformers==2.2.2
+# For embeddings
+sentence-transformers>=2.2.2
 
 # HTTP client for API calls
 aiohttp==3.9.1
