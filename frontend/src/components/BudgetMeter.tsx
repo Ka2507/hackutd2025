@@ -111,7 +111,7 @@ export const BudgetMeter: React.FC = () => {
       try {
         const response = await apiClient.getBudgetStatus();
         if (response.budget) {
-          setBudget(response.budget);
+        setBudget(response.budget);
           setError(false);
         } else {
           setError(true);
@@ -211,10 +211,10 @@ export const BudgetMeter: React.FC = () => {
 
   return (
     <>
-      <div className="card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-neon-cyan" />
+    <div className="card p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-neon-cyan" />
             <span className="text-sm font-medium text-gray-300">Budget</span>
             <button
               onClick={() => {
@@ -226,11 +226,11 @@ export const BudgetMeter: React.FC = () => {
             >
               <Settings className="w-3.5 h-3.5 text-gray-400 hover:text-neon-cyan" />
             </button>
-          </div>
-          <span className={`text-sm font-semibold ${statusColor}`}>
-            {budget.budget_status?.toUpperCase() || 'HEALTHY'}
-          </span>
         </div>
+        <span className={`text-sm font-semibold ${statusColor}`}>
+          {budget.budget_status?.toUpperCase() || 'HEALTHY'}
+        </span>
+      </div>
       
       <div className="mb-2">
         <div className="flex justify-between text-xs text-gray-400 mb-1">
@@ -250,7 +250,7 @@ export const BudgetMeter: React.FC = () => {
           {budget.recommendations[0]}
         </div>
       )}
-      </div>
+    </div>
 
       {/* Budget Settings Modal */}
       {showSettings && (
