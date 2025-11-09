@@ -94,3 +94,4 @@ export const WorkflowTemplates: React.FC<WorkflowTemplatesProps> = ({ onSelectTe
 
 export default WorkflowTemplates;
 
+

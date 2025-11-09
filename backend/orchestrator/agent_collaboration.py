@@ -228,3 +228,4 @@ class AgentCollaboration:
         """Get recent collaboration history"""
         return self.collaboration_history[-limit:]
 
+

@@ -408,3 +408,4 @@ class AdaptiveWorkflowEngine:
             "adaptations": len([n for n in nodes if "adaptation" in n])
         }
 
+

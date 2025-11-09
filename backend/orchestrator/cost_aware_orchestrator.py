@@ -318,10 +318,24 @@ class CostAwareOrchestrator:
         
         logger.info(f"Budget used: ${self.used_budget:.2f} / ${self.total_budget:.2f}")
     
+    def update_budget(self, new_total_budget: float) -> Dict[str, Any]:
+        """Update the total budget"""
+        if new_total_budget < 0:
+            raise ValueError("Budget cannot be negative")
+        if new_total_budget < self.used_budget:
+            logger.warning(f"New budget (${new_total_budget:.2f}) is less than used budget (${self.used_budget:.2f})")
+        
+        old_budget = self.total_budget
+        self.total_budget = new_total_budget
+        
+        logger.info(f"Budget updated from ${old_budget:.2f} to ${new_total_budget:.2f}")
+        
+        return self.get_budget_status()
+    
     def get_budget_status(self) -> Dict[str, Any]:
         """Get current budget status"""
         remaining = self.total_budget - self.used_budget
-        percentage_used = (self.used_budget / self.total_budget) * 100
+        percentage_used = (self.used_budget / self.total_budget) * 100 if self.total_budget > 0 else 0
         
         # Forecast remaining budget
         avg_cost_per_call = self.used_budget / len(self.budget_history) if self.budget_history else 0

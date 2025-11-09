@@ -30,7 +30,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -617,6 +617,30 @@ async def get_budget_status():
         }
     except Exception as e:
         logger.error(f"Error getting budget status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/v1/budget/update")
+async def update_budget(request: Dict[str, Any]):
+    """Update the total budget"""
+    try:
+        new_budget = request.get("total_budget")
+        if new_budget is None:
+            raise HTTPException(status_code=400, detail="total_budget is required")
+        
+        if not isinstance(new_budget, (int, float)) or new_budget < 0:
+            raise HTTPException(status_code=400, detail="total_budget must be a positive number")
+        
+        budget_status = nemotron_bridge.cost_orchestrator.update_budget(float(new_budget))
+        return {
+            "success": True,
+            "budget": budget_status,
+            "message": f"Budget updated to ${new_budget:.2f}"
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error updating budget: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
