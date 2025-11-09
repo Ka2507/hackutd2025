@@ -13,7 +13,8 @@ class RegulationAgent(BaseAgent):
         super().__init__(
             name="RegulationAgent",
             goal="Identify compliance risks and regulatory requirements",
-            context=context
+            context=context,
+            agent_key="regulation"
         )
     
     async def execute(self, task_input: Dict[str, Any]) -> Dict[str, Any]:

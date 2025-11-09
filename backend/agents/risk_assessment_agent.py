@@ -21,7 +21,8 @@ class RiskAssessmentAgent(BaseAgent):
         super().__init__(
             name="RiskAssessmentAgent",
             goal="Predict and mitigate project risks proactively",
-            context=context
+            context=context,
+            agent_key="risk"
         )
         self.risk_patterns = self._load_risk_patterns()
     

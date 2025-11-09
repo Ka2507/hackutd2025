@@ -10,6 +10,7 @@ class APIClient {
   private client: AxiosInstance;
   private ws: WebSocket | null = null;
   private wsCallbacks: Set<(data: any) => void> = new Set();
+  private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.client = axios.create({
@@ -153,44 +154,148 @@ class APIClient {
 
   // WebSocket
   connectWebSocket(onMessage: (data: any) => void) {
-    const wsUrl = API_BASE_URL.replace('http', 'ws') + '/ws/agents';
-    
-    this.ws = new WebSocket(wsUrl);
-    
-    this.ws.onopen = () => {
-      console.log('WebSocket connected');
-    };
-    
-    this.ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        this.wsCallbacks.forEach(callback => callback(data));
-        onMessage(data);
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    };
-    
-    this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
-    
-    this.ws.onclose = () => {
-      console.log('WebSocket disconnected');
-      // Auto-reconnect after 3 seconds
-      setTimeout(() => {
-        if (this.wsCallbacks.size > 0) {
+    // If already connected and callback not registered, just add callback
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.wsCallbacks.add(onMessage);
+      return () => {
+        this.wsCallbacks.delete(onMessage);
+      };
+    }
+
+    // If connection exists but not open, wait for it
+    if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+      // Wait for connection to open, then add callback
+      this.wsCallbacks.add(onMessage);
+      // Store original onopen if it exists
+      const originalOnOpen = this.ws.onopen;
+      this.ws.onopen = (event: Event) => {
+        if (originalOnOpen) {
+          try {
+            originalOnOpen.call(this.ws!, event);
+          } catch (e) {
+            // Ignore errors from original handler
+          }
+        }
+        console.log('WebSocket connected (existing connection)');
+      };
+      return () => {
+        this.wsCallbacks.delete(onMessage);
+      };
+    }
+
+    // If connection is closing, wait and create new one
+    if (this.ws && this.ws.readyState === WebSocket.CLOSING) {
+      this.wsCallbacks.add(onMessage);
+      // Wait for close, then create new connection
+      const checkClose = setInterval(() => {
+        if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
+          clearInterval(checkClose);
+          this.ws = null;
           this.connectWebSocket(onMessage);
         }
-      }, 3000);
-    };
+      }, 100);
+      return () => {
+        clearInterval(checkClose);
+        this.wsCallbacks.delete(onMessage);
+      };
+    }
+
+    // Create new connection
+    const wsUrl = API_BASE_URL.replace('http', 'ws') + '/ws/agents';
+    console.log('Connecting to WebSocket:', wsUrl);
     
-    this.wsCallbacks.add(onMessage);
+    try {
+      this.ws = new WebSocket(wsUrl);
+      this.wsCallbacks.add(onMessage);
+      
+      this.ws.onopen = () => {
+        console.log('WebSocket connected successfully');
+        // Send a ping to keep connection alive
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      };
+      
+      this.ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          // Don't process ping/pong messages
+          if (data.type === 'pong') {
+            return;
+          }
+          // Call all registered callbacks
+          this.wsCallbacks.forEach(callback => {
+            try {
+              callback(data);
+            } catch (err) {
+              console.error('Error in WebSocket callback:', err);
+            }
+          });
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+      
+      this.ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        // Don't log as error if it's just a connection issue
+        if (this.ws?.readyState === WebSocket.CONNECTING) {
+          console.warn('WebSocket connection in progress, this error may be expected');
+        }
+      };
+      
+      this.ws.onclose = (event) => {
+        console.log('WebSocket disconnected', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+          callbacks: this.wsCallbacks.size
+        });
+        
+        // Clear the connection reference
+        this.ws = null;
+        
+        // Only auto-reconnect if we have callbacks registered and it wasn't a clean close (1000)
+        if (this.wsCallbacks.size > 0 && event.code !== 1000) {
+          console.log(`Attempting to reconnect WebSocket in 3 seconds... (code: ${event.code})`);
+          
+          // Clear any existing reconnect timeout
+          if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+          }
+          
+          this.reconnectTimeout = setTimeout(() => {
+            // Only reconnect if still have callbacks and no active connection
+            if (this.wsCallbacks.size > 0 && (!this.ws || this.ws.readyState === WebSocket.CLOSED)) {
+              console.log('Reconnecting WebSocket...');
+              // Create a new connection for the first callback
+              const firstCallback = Array.from(this.wsCallbacks)[0];
+              if (firstCallback) {
+                this.ws = null; // Ensure old connection is cleared
+                this.connectWebSocket(firstCallback);
+              }
+            }
+            this.reconnectTimeout = null;
+          }, 3000);
+        } else {
+          console.log('WebSocket closed cleanly or no callbacks, not reconnecting');
+          if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+          }
+        }
+      };
+    } catch (error) {
+      console.error('Error creating WebSocket:', error);
+      this.wsCallbacks.delete(onMessage);
+    }
     
     return () => {
       this.wsCallbacks.delete(onMessage);
-      if (this.wsCallbacks.size === 0 && this.ws) {
-        this.ws.close();
+      // Only close if no more callbacks and connection is open
+      if (this.wsCallbacks.size === 0 && this.ws && this.ws.readyState === WebSocket.OPEN) {
+        console.log('Closing WebSocket (no more callbacks)');
+        this.ws.close(1000, 'No more callbacks');
         this.ws = null;
       }
     };

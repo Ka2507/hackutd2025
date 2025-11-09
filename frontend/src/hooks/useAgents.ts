@@ -76,7 +76,11 @@ export const useAgents = () => {
 
   // WebSocket connection
   useEffect(() => {
+    let isMounted = true;
+    
     const handleWebSocketMessage = (data: WebSocketMessage) => {
+      if (!isMounted) return;
+      
       setWsMessages(prev => [...prev.slice(-50), data]); // Keep last 50 messages
       
       // Update agent status based on WebSocket messages
@@ -92,15 +96,17 @@ export const useAgents = () => {
       }
     };
 
+    // Only connect WebSocket once when component mounts
     const cleanup = apiClient.connectWebSocket(handleWebSocketMessage);
     
     // Initial fetch
     fetchAgents();
 
     return () => {
+      isMounted = false;
       cleanup();
     };
-  }, [fetchAgents]);
+  }, []); // Empty dependency array - only run once on mount
 
   return {
     agents,

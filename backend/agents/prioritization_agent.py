@@ -19,7 +19,8 @@ class PrioritizationAgent(BaseAgent):
         super().__init__(
             name="PrioritizationAgent",
             goal="Prioritize features using multi-factor analysis and data-driven scoring",
-            context=context
+            context=context,
+            agent_key="prioritization"
         )
     
     async def execute(self, task_input: Dict[str, Any]) -> Dict[str, Any]:

@@ -102,15 +102,31 @@ class CostAwareOrchestrator:
             "risk_analysis",
             "prioritization",
             "complex_reasoning",
-            "multi_agent_coordination"
+            "multi_agent_coordination",
+            # Agent-specific task types (all high-value)
+            "launch_plan",
+            "marketing_strategy",
+            "pricing",
+            "messaging",
+            "gtm",
+            "idea_generation",
+            "competitive_analysis",
+            "user_research",
+            "user_stories",
+            "backlog",
+            "mockup",
+            "design",
+            "compliance_check",
+            "regulation",
+            "workflow_automation"
         ]
         
         # Medium-value task types
         medium_value_types = [
-            "idea_generation",
-            "competitive_analysis",
             "market_sizing",
-            "user_research_synthesis"
+            "user_research_synthesis",
+            "research",
+            "analysis"
         ]
         
         # Low-value task types

@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import asyncio
+import json
 from datetime import datetime
 
 from utils.config import settings
@@ -55,18 +56,34 @@ class ConnectionManager:
     
     async def broadcast(self, message: Dict[str, Any]):
         """Broadcast message to all connected clients"""
+        if not self.active_connections:
+            logger.debug("No active WebSocket connections to broadcast to")
+            return
+        
         disconnected = []
-        for connection in self.active_connections:
+        message_type = message.get('type', 'message')
+        
+        for connection in list(self.active_connections):  # Create a copy to avoid modification during iteration
             try:
+                # Try to send the message
                 await connection.send_json(message)
+                logger.info(f"✓ Broadcasted {message_type} to {len(self.active_connections)} client(s)")
             except Exception as e:
-                logger.error(f"Error broadcasting to client: {e}")
+                # Connection is closed or error occurred
+                error_msg = str(e)
+                # Only log if it's not a connection closed error (which is expected)
+                if "closed" not in error_msg.lower() and "close" not in error_msg.lower():
+                    logger.warning(f"Error broadcasting {message_type} to client: {e}")
                 disconnected.append(connection)
         
         # Remove disconnected clients
         for conn in disconnected:
             if conn in self.active_connections:
-                self.active_connections.remove(conn)
+                try:
+                    self.active_connections.remove(conn)
+                    logger.info(f"Removed disconnected WebSocket client. Remaining: {len(self.active_connections)}")
+                except (ValueError, KeyError):
+                    pass  # Already removed
 
 
 manager = ConnectionManager()
@@ -252,16 +269,22 @@ async def run_task(request: TaskRunRequest):
                 metadata={"workflow_result": result}
             )
         
-        # Broadcast task completion
-        await manager.broadcast({
-            "type": "task_completed",
-            "data": {
-                "workflow_type": request.workflow_type,
-                "workflow_id": result.get("workflow_id"),
-                "status": result.get("status"),
-                "timestamp": datetime.now().isoformat()
-            }
-        })
+        # Broadcast task completion with full results
+        logger.info(f"Broadcasting task_completed for workflow {result.get('workflow_id')}")
+        try:
+            await manager.broadcast({
+                "type": "task_completed",
+                "data": {
+                    "workflow_type": request.workflow_type,
+                    "workflow_id": result.get("workflow_id"),
+                    "status": result.get("status"),
+                    "result": result,  # Include full result
+                    "timestamp": datetime.now().isoformat()
+                }
+            })
+            logger.info("Successfully broadcasted task_completed message")
+        except Exception as e:
+            logger.error(f"Error broadcasting task_completed: {e}")
         
         return {
             "success": True,
@@ -693,14 +716,38 @@ async def websocket_endpoint(websocket: WebSocket):
         
         # Keep connection alive and handle incoming messages
         while True:
-            data = await websocket.receive_text()
-            logger.debug(f"Received WebSocket message: {data}")
-            
-            # Echo back for now (can add command handling later)
-            await websocket.send_json({
-                "type": "echo",
-                "data": {"message": data}
-            })
+            try:
+                # Wait for either text or disconnect
+                message = await websocket.receive()
+                
+                if "text" in message:
+                    data = message["text"]
+                    logger.debug(f"Received WebSocket message: {data}")
+                    
+                    try:
+                        message_data = json.loads(data)
+                        # Handle ping/pong for keepalive
+                        if message_data.get("type") == "ping":
+                            await websocket.send_json({
+                                "type": "pong",
+                                "data": {"timestamp": datetime.now().isoformat()}
+                            })
+                            continue
+                    except json.JSONDecodeError:
+                        pass
+                    
+                    # Echo back for now (can add command handling later)
+                    await websocket.send_json({
+                        "type": "echo",
+                        "data": {"message": data}
+                    })
+                elif "bytes" in message:
+                    # Handle binary messages if needed
+                    logger.debug("Received binary WebSocket message")
+            except Exception as e:
+                # Connection closed or error
+                logger.debug(f"WebSocket receive error: {e}")
+                break
             
     except WebSocketDisconnect:
         manager.disconnect(websocket)

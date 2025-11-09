@@ -12,7 +12,8 @@ class PrototypeAgent(BaseAgent):
         super().__init__(
             name="PrototypeAgent",
             goal="Create design mockups and integrate with Figma",
-            context=context
+            context=context,
+            agent_key="prototype"
         )
     
     async def execute(self, task_input: Dict[str, Any]) -> Dict[str, Any]:

@@ -13,7 +13,8 @@ class AutomationAgent(BaseAgent):
         super().__init__(
             name="AutomationAgent",
             goal="Automate repetitive PM tasks, reports, and workflows",
-            context=context
+            context=context,
+            agent_key="automation"
         )
     
     async def execute(self, task_input: Dict[str, Any]) -> Dict[str, Any]:
