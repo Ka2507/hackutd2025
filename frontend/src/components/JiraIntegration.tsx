@@ -19,7 +19,10 @@ import {
   FileText,
   Target,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  List,
+  Sparkles,
+  Download
 } from 'lucide-react';
 
 interface JiraIntegrationProps {
@@ -39,7 +42,7 @@ interface Story {
 }
 
 export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'create' | 'sprint' | 'backlog' | 'prd'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'sprint' | 'prd' | 'templates'>('create');
   
   // Create Stories State
   const [projectKey, setProjectKey] = useState('PROD');
@@ -56,6 +59,32 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClos
   const [prdContent, setPrdContent] = useState('');
   const [creatingFromPRD, setCreatingFromPRD] = useState(false);
   const [prdResults, setPrdResults] = useState<any>(null);
+  
+  // Templates State
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [pncDemoStories, setPncDemoStories] = useState<any[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  
+  // Load templates when Templates tab is opened
+  const loadTemplatesData = async () => {
+    setLoadingTemplates(true);
+    try {
+      const [templatesRes, demoRes] = await Promise.all([
+        fetch('http://localhost:8000/api/v1/templates/list'),
+        fetch('http://localhost:8000/api/v1/demo/pnc_stories')
+      ]);
+      
+      const templatesData = await templatesRes.json();
+      const demoData = await demoRes.json();
+      
+      if (templatesData.success) setTemplates(templatesData.templates || []);
+      if (demoData.success) setPncDemoStories(demoData.stories || []);
+    } catch (error) {
+      console.error('Error loading templates:', error);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
   
   const handleCreateStories = async () => {
     if (!featureDescription.trim()) return;
@@ -147,6 +176,54 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClos
     }
   };
   
+  const exportStories = async (format: string) => {
+    if (createdStories.length === 0) return;
+    
+    try {
+      // Format stories for PNC workshop compatibility
+      const formattedStories = createdStories.map(story => ({
+        title: story.summary,
+        description: story.description,
+        acceptance_criteria: story.acceptance_criteria || [],
+        priority: story.priority,
+        estimate: `${story.story_points}sp`,
+        tags: story.labels || [],
+        epic: '',
+        author: 'ProdigyPM AI - 9 Agent System',
+        status: 'Draft',
+        jira_key: story.jira_key || ''
+      }));
+      
+      const response = await fetch('http://localhost:8000/api/v1/export/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stories: formattedStories,
+          format: format,
+          title: `User Stories - ${projectKey}`
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Download the file
+        const blob = new Blob([data.content], { type: data.media_type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = data.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error exporting stories:', error);
+      alert('Export failed. Please try again.');
+    }
+  };
+  
   if (!isOpen) return null;
   
   return (
@@ -222,6 +299,20 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClos
               <FileText className="w-4 h-4 inline mr-2" />
               Create from PRD
             </button>
+            <button
+              onClick={() => {
+                setActiveTab('templates');
+                if (templates.length === 0) loadTemplatesData();
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTab === 'templates'
+                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                  : 'text-gray-400 hover:text-white hover:bg-dark-lighter'
+              }`}
+            >
+              <List className="w-4 h-4 inline mr-2" />
+              Templates (PNC)
+            </button>
           </div>
           
           {/* Content */}
@@ -283,10 +374,35 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClos
                 {/* Created Stories */}
                 {createdStories.length > 0 && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                      Created {createdStories.length} User Stories
-                    </h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                        Created {createdStories.length} User Stories
+                      </h3>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => exportStories('csv')}
+                          className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded flex items-center gap-1"
+                        >
+                          <Send className="w-3 h-3" />
+                          Export CSV
+                        </button>
+                        <button
+                          onClick={() => exportStories('markdown')}
+                          className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded flex items-center gap-1"
+                        >
+                          <FileText className="w-3 h-3" />
+                          Export MD
+                        </button>
+                        <button
+                          onClick={() => exportStories('jira_csv')}
+                          className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded flex items-center gap-1"
+                        >
+                          <Target className="w-3 h-3" />
+                          Jira Import
+                        </button>
+                      </div>
+                    </div>
                     
                     {createdStories.map((story, idx) => (
                       <div
@@ -531,6 +647,231 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClos
                       </div>
                     )}
                   </div>
+                )}
+              </div>
+            )}
+            
+            {/* Templates (PNC) Tab */}
+            {activeTab === 'templates' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-4">
+                  <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-blue-400" />
+                    PNC Workshop Compatible Story Templates
+                  </h3>
+                  <p className="text-sm text-gray-300">
+                    Demonstrating how our <span className="text-purple-400 font-semibold">9-Agent AI System</span> produces 
+                    superior results in the <span className="text-blue-400 font-semibold">PNC workshop format</span>
+                  </p>
+                </div>
+                
+                {loadingTemplates ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="w-12 h-12 text-blue-400 mx-auto mb-4 animate-spin" />
+                    <p className="text-gray-400">Loading templates...</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Available Templates */}
+                    <div>
+                      <h4 className="text-md font-semibold text-white mb-3 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-blue-400" />
+                        Available Templates ({templates.length})
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {templates.map((template, idx) => (
+                          <div
+                            key={idx}
+                            className="bg-dark-lighter border border-dark-border rounded-lg p-4 hover:border-blue-500/50 transition-colors"
+                          >
+                            <h5 className="text-white font-medium mb-2">
+                              {template.name.replace(/_/g, ' ').toUpperCase()}
+                            </h5>
+                            <p className="text-xs text-gray-400 mb-2 line-clamp-2">{template.title}</p>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className={`px-2 py-0.5 rounded ${
+                                template.priority === 'High' ? 'bg-red-500/20 text-red-400' :
+                                template.priority === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                'bg-green-500/20 text-green-400'
+                              }`}>
+                                {template.priority}
+                              </span>
+                              <span className="text-gray-400">{template.estimate}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {template.tags?.slice(0, 3).map((tag: string, i: number) => (
+                                <span key={i} className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* PNC Demo Stories - Shows Our AI Advantage */}
+                    {pncDemoStories.length > 0 && (
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-md font-semibold text-white flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-purple-400" />
+                            AI-Generated Demo Stories (PNC Format)
+                          </h4>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const formattedStories = pncDemoStories.map(s => ({
+                                    title: s.title,
+                                    description: s.description,
+                                    acceptance_criteria: s.acceptance_criteria || [],
+                                    priority: s.priority,
+                                    estimate: s.estimate,
+                                    tags: s.tags || [],
+                                    epic: s.epic,
+                                    author: s.author,
+                                    status: s.status
+                                  }));
+                                  
+                                  const response = await fetch('http://localhost:8000/api/v1/export/stories', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ stories: formattedStories, format: 'csv', title: 'PNC Demo Stories' })
+                                  });
+                                  
+                                  const data = await response.json();
+                                  if (data.success) {
+                                    const blob = new Blob([data.content], { type: data.media_type });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = data.filename;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                  }
+                                } catch (error) {
+                                  console.error('Export failed:', error);
+                                }
+                              }}
+                              className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded flex items-center gap-1"
+                            >
+                              <Download className="w-3 h-3" />
+                              CSV
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const formattedStories = pncDemoStories.map(s => ({
+                                    title: s.title,
+                                    description: s.description,
+                                    acceptance_criteria: s.acceptance_criteria || [],
+                                    priority: s.priority,
+                                    estimate: s.estimate,
+                                    tags: s.tags || [],
+                                    epic: s.epic,
+                                    author: s.author,
+                                    status: s.status
+                                  }));
+                                  
+                                  const response = await fetch('http://localhost:8000/api/v1/export/stories', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ stories: formattedStories, format: 'markdown', title: 'PNC Demo Stories' })
+                                  });
+                                  
+                                  const data = await response.json();
+                                  if (data.success) {
+                                    const blob = new Blob([data.content], { type: data.media_type });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = data.filename;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                  }
+                                } catch (error) {
+                                  console.error('Export failed:', error);
+                                }
+                              }}
+                              className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded flex items-center gap-1"
+                            >
+                              <Download className="w-3 h-3" />
+                              MD
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {pncDemoStories.map((story, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-dark-lighter border border-dark-border rounded-lg p-4"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <h5 className="text-white font-medium flex-1">{story.title}</h5>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-xs px-2 py-1 rounded ${
+                                    story.priority === 'High' ? 'bg-red-500/20 text-red-400' :
+                                    story.priority === 'Medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                    'bg-green-500/20 text-green-400'
+                                  }`}>
+                                    {story.priority}
+                                  </span>
+                                  <span className="text-xs text-gray-400">{story.estimate}</span>
+                                </div>
+                              </div>
+                              
+                              <p className="text-sm text-gray-400 mb-3">{story.description}</p>
+                              
+                              {story.acceptance_criteria && story.acceptance_criteria.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-xs font-semibold text-gray-300 mb-1">Acceptance Criteria:</p>
+                                  <ul className="text-xs text-gray-400 space-y-1">
+                                    {story.acceptance_criteria.map((criterion: string, i: number) => (
+                                      <li key={i} className="flex items-start gap-2">
+                                        <CheckCircle className="w-3 h-3 text-green-400 mt-0.5 flex-shrink-0" />
+                                        <span>{criterion}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="flex gap-2">
+                                  {story.tags?.map((tag: string, i: number) => (
+                                    <span key={i} className="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded">
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                                <span className="text-gray-400">Epic: {story.epic}</span>
+                              </div>
+                              
+                              {story.ai_enhanced && (
+                                <div className="mt-3 pt-3 border-t border-dark-border">
+                                  <p className="text-xs text-purple-300 mb-1 flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3" />
+                                    AI Enhancement: {story.generated_by}
+                                  </p>
+                                  <ul className="text-xs text-gray-400 space-y-0.5">
+                                    {story.advantages?.map((adv: string, i: number) => (
+                                      <li key={i}>✓ {adv}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
