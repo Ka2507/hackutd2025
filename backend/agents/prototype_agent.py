@@ -247,10 +247,19 @@ class PrototypeAgent(BaseAgent):
         hex_colors = re.findall(r'#[0-9A-Fa-f]{6}', feature_description)
         color_words = re.findall(r'\b(blue|green|red|purple|pink|orange|yellow|cyan|teal|indigo|violet|magenta)\b', feature_description.lower())
         
+        # Determine contextual color suggestions
+        color_suggestions = self._generate_color_scheme(feature_description)
+        
         # Use AI to generate design concept with component structure
         prompt = f"""You are a UX/UI designer creating a mockup for: {feature_description}
 
-IMPORTANT: If the user specifies colors (like "blue and orange" or "#4A90E2"), use EXACTLY those colors in your specification.
+CRITICAL COLOR REQUIREMENTS:
+- Choose colors that match the feature's domain and purpose
+- PRIMARY and ACCENT colors MUST be DIFFERENT and complementary
+- DO NOT use the same accent color for every design
+- Consider the psychological impact of colors for this specific use case
+
+{f"User explicitly requested colors: {', '.join(hex_colors)}" if hex_colors else f"Suggested colors for this domain: Primary={color_suggestions[0]}, Accent={color_suggestions[1]}"}
 
 Provide a detailed design specification with:
 
@@ -260,10 +269,8 @@ Provide a detailed design specification with:
    - Component type (header, sidebar, card, form, table, chart, button, etc.)
    - Component purpose/content
    - Positioning (top, left, center, right, bottom)
-4. Primary Color - MUST be a 6-digit hex code (e.g., #4A90E2)
-   {f"User requested: {', '.join(color_words) or ', '.join(hex_colors)}" if color_words or hex_colors else "Choose based on feature context"}
-5. Accent Color - MUST be a 6-digit hex code (e.g., #F97316)
-6. Main user interaction pattern
+4. Primary Color - MUST be a 6-digit hex code that fits the feature domain
+5. Accent Color - MUST be a DIFFERENT 6-digit hex code that complements primary
 
 Format your response EXACTLY as:
 SCREEN: [name]
@@ -273,7 +280,7 @@ COMPONENTS:
 - [type]: [purpose] - [position]
 ...
 PRIMARY_COLOR: #[EXACTLY 6 HEX DIGITS]
-ACCENT_COLOR: #[EXACTLY 6 HEX DIGITS]
+ACCENT_COLOR: #[EXACTLY 6 HEX DIGITS - MUST BE DIFFERENT FROM PRIMARY]
 INTERACTION: [description]
 
 Then provide a narrative description of the design concept."""
@@ -287,37 +294,50 @@ Then provide a narrative description of the design concept."""
         screen_name = "Main Screen"
         
         # Try to extract structured info from AI response
+        import re
         lines = design_concept.split('\n')
         for line in lines:
+            line_upper = line.upper().strip()
+            
             if line.startswith('SCREEN:'):
                 screen_name = line.replace('SCREEN:', '').strip()
-            elif line.startswith('PRIMARY_COLOR:'):
-                color = line.replace('PRIMARY_COLOR:', '').strip()
-                # Extract hex code from line
-                import re
-                hex_match = re.search(r'#[0-9A-Fa-f]{6}', color)
+                
+            # Parse PRIMARY_COLOR (case-insensitive)
+            if line_upper.startswith('PRIMARY_COLOR:') or line_upper.startswith('PRIMARY COLOR:'):
+                color_text = line.split(':', 1)[1].strip() if ':' in line else line
+                hex_match = re.search(r'#[0-9A-Fa-f]{6}', color_text)
                 if hex_match:
-                    primary_color = hex_match.group(0)
-            elif line.startswith('ACCENT_COLOR:'):
-                color = line.replace('ACCENT_COLOR:', '').strip()
-                # Extract hex code from line
-                import re
-                hex_match = re.search(r'#[0-9A-Fa-f]{6}', color)
+                    primary_color = hex_match.group(0).upper()
+                    logger.info(f"✅ Parsed PRIMARY_COLOR: {primary_color}")
+                    
+            # Parse ACCENT_COLOR (case-insensitive, multiple variations)
+            if (line_upper.startswith('ACCENT_COLOR:') or 
+                line_upper.startswith('ACCENT COLOR:') or
+                line_upper.startswith('SECONDARY_COLOR:') or
+                line_upper.startswith('SECONDARY COLOR:')):
+                color_text = line.split(':', 1)[1].strip() if ':' in line else line
+                hex_match = re.search(r'#[0-9A-Fa-f]{6}', color_text)
                 if hex_match:
-                    accent_color = hex_match.group(0)
-            elif line.strip().startswith('-') and ':' in line:
-                # Parse component line
+                    accent_color = hex_match.group(0).upper()
+                    logger.info(f"✅ Parsed ACCENT_COLOR: {accent_color}")
+                    
+            # Parse component lines
+            if line.strip().startswith('-') and ':' in line:
                 parts = line.strip()[1:].split(':', 1)
                 if len(parts) == 2:
                     comp_type = parts[0].strip()
                     comp_rest = parts[1].strip()
                     comp_desc = comp_rest.split('-')[0].strip() if '-' in comp_rest else comp_rest
-                    components_list.append({
-                        "type": comp_type,
-                        "content": comp_desc
-                    })
+                    if comp_type.lower() not in ['primary', 'accent', 'secondary']:  # Skip if it's a color line
+                        components_list.append({
+                            "type": comp_type,
+                            "content": comp_desc
+                        })
         
-        # Generate dynamic color scheme based on feature if AI didn't provide
+        # Log what AI provided
+        logger.info(f"🔍 AI provided - Primary: {primary_color}, Accent: {accent_color}")
+        
+        # Generate dynamic color scheme based on feature if AI didn't provide BOTH
         if not primary_color or not accent_color:
             # Check if user provided hex colors directly in request
             import re
@@ -325,18 +345,38 @@ Then provide a narrative description of the design concept."""
             
             if len(hex_colors_in_request) >= 2:
                 # User provided colors directly
-                primary_color = hex_colors_in_request[0]
-                accent_color = hex_colors_in_request[1]
+                if not primary_color:
+                    primary_color = hex_colors_in_request[0].upper()
+                if not accent_color:
+                    accent_color = hex_colors_in_request[1].upper()
                 logger.info(f"🎨 Using user-provided colors: {primary_color}, {accent_color}")
+                
             elif len(hex_colors_in_request) == 1:
-                # User provided one color, generate complementary
-                primary_color = hex_colors_in_request[0]
-                accent_color = self._generate_complementary_color(primary_color)
+                # User provided one color
+                if not primary_color:
+                    primary_color = hex_colors_in_request[0].upper()
+                if not accent_color:
+                    accent_color = self._generate_complementary_color(primary_color)
                 logger.info(f"🎨 User color + complementary: {primary_color}, {accent_color}")
+                
             else:
-                # Generate based on feature description
-                primary_color, accent_color = self._generate_color_scheme(feature_description)
-                logger.info(f"🎨 Generated contextual color scheme: {primary_color}, {accent_color}")
+                # Generate based on feature description (contextual)
+                fallback_primary, fallback_accent = self._generate_color_scheme(feature_description)
+                if not primary_color:
+                    primary_color = fallback_primary
+                if not accent_color:
+                    accent_color = fallback_accent
+                logger.info(f"🎨 Using contextual fallback: {primary_color}, {accent_color}")
+        
+        # Safety check: If AI keeps using #F97316 as accent, override with contextual scheme
+        if accent_color and accent_color.upper() == "#F97316" and primary_color:
+            # AI defaulted to orange - use our contextual scheme instead
+            _, contextual_accent = self._generate_color_scheme(feature_description)
+            if contextual_accent != "#FF7A00":  # If contextual is also not orange
+                accent_color = contextual_accent
+                logger.info(f"⚠️ AI used default orange, overriding with contextual accent: {accent_color}")
+        
+        logger.info(f"🎨 FINAL COLORS - Primary: {primary_color}, Accent: {accent_color}")
         
         # If no components extracted, create based on feature description
         if not components_list:
