@@ -3,17 +3,19 @@
  */
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Layers, History } from 'lucide-react';
+import { Play, Layers, History, Network, TrendingUp } from 'lucide-react';
 import { useAgents } from '@/hooks/useAgents';
 import AgentPanel from './AgentPanel';
 import TaskCard from './TaskCard';
 import ChatInterface from './ChatInterface';
 import BudgetMeter from './BudgetMeter';
 import WorkflowTemplates from './WorkflowTemplates';
+import WorkflowVisualization from './WorkflowVisualization';
+import BeforeAfter from './BeforeAfter';
 
 export const Dashboard: React.FC = () => {
   const { agents, wsMessages, runWorkflow } = useAgents();
-  const [activeTab, setActiveTab] = useState<'agents' | 'chat' | 'activity' | 'templates'>('agents');
+  const [activeTab, setActiveTab] = useState<'agents' | 'visualization' | 'impact' | 'chat' | 'activity' | 'templates'>('agents');
   const [selectedWorkflow, setSelectedWorkflow] = useState('');
 
   const workflows = [
@@ -141,6 +143,8 @@ export const Dashboard: React.FC = () => {
         <div className="flex gap-2 border-b border-gray-300">
           {[
             { id: 'agents', label: 'Agents', icon: Layers },
+            { id: 'visualization', label: 'Workflow', icon: Network },
+            { id: 'impact', label: 'Impact', icon: TrendingUp },
             { id: 'templates', label: 'Templates', icon: Layers },
             { id: 'chat', label: 'Chat', icon: History },
             { id: 'activity', label: 'Activity', icon: History },
@@ -218,6 +222,32 @@ export const Dashboard: React.FC = () => {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'visualization' && (
+          <div className="space-y-4">
+            <WorkflowVisualization
+              agents={Object.entries(agents).map(([key, agent]) => ({
+                name: agent.name,
+                status: agent.status === 'running' ? 'working' : 
+                       agent.status === 'completed' ? 'done' : 'idle',
+                quality_score: agent.quality_score,
+              }))}
+              contextFlow={[]}
+            />
+          </div>
+        )}
+
+        {activeTab === 'impact' && (
+          <div className="space-y-6">
+            <BeforeAfter
+              timeSaved={8.5}
+              qualityImprovement={35}
+              itemsGenerated={23}
+              traditionalCount={8}
+              automatedCount={23}
+            />
           </div>
         )}
 
