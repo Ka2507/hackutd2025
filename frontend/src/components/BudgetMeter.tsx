@@ -79,17 +79,17 @@ export const BudgetMeter: React.FC = () => {
   const getStatusColor = (percentage: number): string => {
     if (percentage >= 95) return 'text-red-500';
     if (percentage >= 85) return 'text-red-400';
-    if (percentage >= 75) return 'text-silver';
-    if (percentage >= 50) return 'text-silver';
-    return 'text-white';
+    if (percentage >= 75) return 'text-yellow-400';
+    if (percentage >= 50) return 'text-yellow-400';
+    return 'text-green-400';
   };
 
   const getBgColor = (percentage: number): string => {
     if (percentage >= 95) return 'bg-red-500/30';
     if (percentage >= 85) return 'bg-red-500/20';
-    if (percentage >= 75) return 'bg-silver/20';
-    if (percentage >= 50) return 'bg-silver/20';
-    return 'bg-white/20';
+    if (percentage >= 75) return 'bg-yellow-500/20';
+    if (percentage >= 50) return 'bg-yellow-500/20';
+    return 'bg-green-500';
   };
 
   if (loading || !budget) {
