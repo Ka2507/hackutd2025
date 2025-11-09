@@ -104,7 +104,8 @@ class NemotronBridge:
         priority: str = "medium",
         temperature: float = 0.7,
         max_tokens: int = 2000,
-        system_prompt: Optional[str] = None
+        system_prompt: Optional[str] = None,
+        use_cache: bool = True
     ) -> Dict[str, Any]:
         """
         Call NVIDIA Nemotron API with appropriate model for the agent
@@ -117,17 +118,19 @@ class NemotronBridge:
             temperature: Sampling temperature (0-1)
             max_tokens: Maximum tokens to generate
             system_prompt: Optional custom system prompt
+            use_cache: Whether to use cached responses (default True, disable for chat)
             
         Returns:
             Response with content, model used, usage stats, and cost
         """
-        # Check cache first
-        cache_key = f"{agent_name}:{prompt[:100]}:{task_type}"
-        if cache_key in self.response_cache:
-            logger.info(f"💾 Returning cached response for {agent_name}")
-            cached = self.response_cache[cache_key]
-            cached["cached"] = True
-            return cached
+        # Check cache only if enabled (skip for chat messages)
+        if use_cache:
+            cache_key = f"{agent_name}:{hash(prompt)}:{task_type}"
+            if cache_key in self.response_cache:
+                logger.info(f"💾 Returning cached response for {agent_name}")
+                cached = self.response_cache[cache_key]
+                cached["cached"] = True
+                return cached
         
         # Check if API key is available
         if not self.client:
@@ -208,8 +211,10 @@ class NemotronBridge:
                 "cached": False
             }
             
-            # Cache the response
-            self.response_cache[cache_key] = result
+            # Cache the response only if caching is enabled
+            if use_cache:
+                cache_key = f"{agent_name}:{hash(prompt)}:{task_type}"
+                self.response_cache[cache_key] = result
             
             logger.info(f"✅ NVIDIA call successful | Tokens: {total_tokens} | Cost: ${cost:.4f} | Total: ${self.total_cost:.2f}/${self.total_budget}")
             

@@ -79,13 +79,14 @@ class BaseAgent(ABC):
         self.last_output = output
         return output
     
-    async def _call_llm(self, prompt: str, use_nvidia: bool = True) -> str:
+    async def _call_llm(self, prompt: str, use_nvidia: bool = True, use_cache: bool = False) -> str:
         """
         Call LLM - Uses real NVIDIA Nemotron API
         
         Args:
             prompt: The prompt to send
             use_nvidia: Whether to use NVIDIA API (default True)
+            use_cache: Whether to cache responses (default False for interactive chat)
             
         Returns:
             LLM response text
@@ -99,7 +100,8 @@ class BaseAgent(ABC):
                 agent_name=agent_key,
                 task_type=self._get_task_type(prompt),
                 temperature=0.7,
-                max_tokens=1500
+                max_tokens=1500,
+                use_cache=use_cache  # Disable caching for interactive chat
             )
             
             return result["response"]
