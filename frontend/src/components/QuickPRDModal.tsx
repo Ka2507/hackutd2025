@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Zap, Loader2 } from 'lucide-react';
+import { X, Zap, Loader2, ArrowLeft } from 'lucide-react';
 import apiClient from '../utils/apiClient';
 
 interface QuickPRDModalProps {
@@ -79,14 +79,25 @@ export const QuickPRDModal: React.FC<QuickPRDModalProps> = ({
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-dark-border">
-            <div>
-              <h2 className="text-2xl font-display font-bold text-white flex items-center gap-2">
-                <Zap className="w-6 h-6 text-orange-400" />
-                Quick PRD Generation
-              </h2>
-              <p className="text-sm text-gray-400 mt-1">
-                Describe your product idea in a few sentences
-              </p>
+            <div className="flex items-center gap-3">
+              {!isGenerating && (
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-dark-lighter rounded-lg transition-colors"
+                  title="Back to home"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-400" />
+                </button>
+              )}
+              <div>
+                <h2 className="text-2xl font-display font-bold text-white flex items-center gap-2">
+                  <Zap className="w-6 h-6 text-orange-400" />
+                  Quick PRD Generation
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Describe your product idea in a few sentences
+                </p>
+              </div>
             </div>
             {!isGenerating && (
               <button

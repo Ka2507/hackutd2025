@@ -176,7 +176,7 @@ export const Home: React.FC = () => {
             className="text-center mb-16"
           >
             <h2 className="section-header">
-              Seven Specialized Agents
+              Nine Specialized Agents
             </h2>
             <p className="section-subtitle">
               Each agent brings unique expertise to your product workflow

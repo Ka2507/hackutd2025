@@ -2,7 +2,7 @@
  * PRD Selection Modal - Choose between Detailed or Quick PRD generation
  */
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Zap, Brain, FileText, ArrowRight } from 'lucide-react';
+import { X, Zap, Brain, FileText, ArrowRight, ArrowLeft } from 'lucide-react';
 
 interface PRDSelectionModalProps {
   isOpen: boolean;
@@ -40,14 +40,23 @@ export const PRDSelectionModal: React.FC<PRDSelectionModalProps> = ({
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-dark-border">
-            <div>
-              <h2 className="text-2xl font-display font-bold gradient-text flex items-center gap-2">
-                <FileText className="w-6 h-6" />
-                Generate PRD
-              </h2>
-              <p className="text-sm text-gray-400 mt-1">
-                Choose your PRD generation method
-              </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-dark-lighter rounded-lg transition-colors"
+                title="Back to home"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-400" />
+              </button>
+              <div>
+                <h2 className="text-2xl font-display font-bold gradient-text flex items-center gap-2">
+                  <FileText className="w-6 h-6" />
+                  Generate PRD
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Choose your PRD generation method
+                </p>
+              </div>
             </div>
             <button
               onClick={onClose}

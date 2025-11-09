@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, ChevronLeft, Check, Loader2 } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, Loader2, ArrowLeft } from 'lucide-react';
 import apiClient from '../utils/apiClient';
 
 interface DetailedPRDModalProps {
@@ -187,14 +187,25 @@ export const DetailedPRDModal: React.FC<DetailedPRDModalProps> = ({
 
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-dark-border">
-            <div>
-              <h2 className="text-xl font-display font-bold text-white flex items-center gap-2">
-                <Brain className="w-5 h-5 text-neon-cyan" />
-                {currentAgent.title}
-              </h2>
-              <p className="text-sm text-gray-400 mt-1">
-                Step {currentStep + 1} of {AGENT_STEPS.length} • {currentAgent.name} Agent
-              </p>
+            <div className="flex items-center gap-3">
+              {!isGenerating && currentStep === 0 && (
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-dark-lighter rounded-lg transition-colors"
+                  title="Back to home"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-400" />
+                </button>
+              )}
+              <div>
+                <h2 className="text-xl font-display font-bold text-white flex items-center gap-2">
+                  <Brain className="w-5 h-5 text-neon-cyan" />
+                  {currentAgent.title}
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Step {currentStep + 1} of {AGENT_STEPS.length} • {currentAgent.name} Agent
+                </p>
+              </div>
             </div>
             {!isGenerating && (
               <button
