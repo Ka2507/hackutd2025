@@ -34,34 +34,34 @@ interface WorkflowVisualizationProps {
 const getStatusColor = (status: string): string => {
   switch (status) {
     case 'thinking':
-      return 'bg-yellow-500/20 border-yellow-500';
+      return 'bg-silver/20 border-silver';
     case 'working':
-      return 'bg-blue-500/20 border-blue-500';
+      return 'bg-white/20 border-white';
     case 'collaborating':
-      return 'bg-purple-500/20 border-purple-500';
+      return 'bg-silver/20 border-silver';
     case 'done':
-      return 'bg-green-500/20 border-green-500';
+      return 'bg-white/20 border-white';
     case 'error':
       return 'bg-red-500/20 border-red-500';
     default:
-      return 'bg-gray-500/20 border-gray-500';
+      return 'bg-silver/20 border-silver';
   }
 };
 
 const getStatusIcon = (status: string) => {
   switch (status) {
     case 'thinking':
-      return <Brain className="w-4 h-4 text-yellow-400 animate-pulse" />;
+      return <Brain className="w-4 h-4 text-silver animate-pulse" />;
     case 'working':
-      return <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />;
+      return <Loader2 className="w-4 h-4 text-white animate-spin" />;
     case 'collaborating':
-      return <ArrowRight className="w-4 h-4 text-purple-400" />;
+      return <ArrowRight className="w-4 h-4 text-silver" />;
     case 'done':
-      return <CheckCircle2 className="w-4 h-4 text-green-400" />;
+      return <CheckCircle2 className="w-4 h-4 text-white" />;
     case 'error':
       return <AlertCircle className="w-4 h-4 text-red-400" />;
     default:
-      return <div className="w-4 h-4 rounded-full bg-gray-400" />;
+      return <div className="w-4 h-4 rounded-full bg-silver/70" />;
   }
 };
 
@@ -75,18 +75,18 @@ const CustomAgentNode: React.FC<{ data: any }> = ({ data }) => {
     >
       <div className="flex items-center gap-2 mb-2">
         {getStatusIcon(agent.status)}
-        <span className="text-sm font-semibold text-white">{agent.name}</span>
+        <span className="text-sm font-semibold text-silver">{agent.name}</span>
       </div>
       
       {agent.quality_score !== undefined && (
         <div className="mb-2">
-          <div className="flex justify-between text-xs text-gray-400 mb-1">
+          <div className="flex justify-between text-xs text-silver/70 mb-1">
             <span>Quality</span>
             <span>{(agent.quality_score * 100).toFixed(0)}%</span>
           </div>
           <div className="w-full bg-dark-lighter rounded-full h-1.5">
             <div
-              className="bg-neon-cyan h-1.5 rounded-full transition-all"
+              className="bg-white h-1.5 rounded-full transition-all"
               style={{ width: `${agent.quality_score * 100}%` }}
             />
           </div>
@@ -94,12 +94,12 @@ const CustomAgentNode: React.FC<{ data: any }> = ({ data }) => {
       )}
       
       {agent.reasoning && agent.reasoning.length > 0 && (
-        <div className="mt-2 text-xs text-gray-400">
+        <div className="mt-2 text-xs text-silver/70">
           <div className="font-medium mb-1">Thinking:</div>
           <div className="space-y-1">
             {agent.reasoning.slice(0, 2).map((step: string, i: number) => (
               <div key={i} className="flex items-start gap-1">
-                <span className="text-neon-cyan">•</span>
+                <span className="text-white">•</span>
                 <span className="line-clamp-1">{step}</span>
               </div>
             ))}
@@ -108,7 +108,7 @@ const CustomAgentNode: React.FC<{ data: any }> = ({ data }) => {
       )}
       
       {agent.collaborating_with && agent.collaborating_with.length > 0 && (
-        <div className="mt-2 text-xs text-purple-400">
+        <div className="mt-2 text-xs text-silver">
           ↔ Collaborating with: {agent.collaborating_with.join(', ')}
         </div>
       )}
@@ -156,17 +156,17 @@ export const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
       target: flow.to,
       animated: true,
       style: {
-        stroke: '#00FFFF',
+        stroke: '#ffffff',
         strokeWidth: 2,
       },
       label: flow.data_type,
       labelStyle: {
-        fill: '#00FFFF',
+        fill: '#ffffff',
         fontSize: 10,
         fontWeight: 500,
       },
       labelBgStyle: {
-        fill: '#0F1117',
+        fill: '#020305',
         fillOpacity: 0.8,
       },
     }));
@@ -185,16 +185,16 @@ export const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
         maxZoom={1.5}
         defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
       >
-        <Background color="#1A1D29" gap={20} />
+        <Background color="#0f1418" gap={20} />
         <Controls className="bg-dark-card border-dark-border" />
         <MiniMap
           className="bg-dark-card border-dark-border"
           nodeColor={(node) => {
             const status = node.data?.agent?.status || 'idle';
-            if (status === 'done') return '#10b981';
-            if (status === 'working') return '#3b82f6';
-            if (status === 'thinking') return '#eab308';
-            return '#6b7280';
+            if (status === 'done') return '#ffffff';
+            if (status === 'working') return '#ffffff';
+            if (status === 'thinking') return '#707b81';
+            return '#707b81';
           }}
         />
       </ReactFlow>

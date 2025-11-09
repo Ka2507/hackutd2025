@@ -14,22 +14,22 @@ interface AgentPanelProps {
 const statusConfig = {
   idle: {
     icon: Activity,
-    color: 'text-gray-400',
-    bgColor: 'bg-gray-500/10',
-    borderColor: 'border-gray-500/20',
+    color: 'text-silver/70',
+    bgColor: 'bg-silver/10',
+    borderColor: 'border-silver/20',
   },
   running: {
     icon: Loader2,
-    color: 'text-nvidia-green',
-    bgColor: 'bg-nvidia-green/10',
-    borderColor: 'border-nvidia-green/40',
+    color: 'text-white',
+    bgColor: 'bg-white/10',
+    borderColor: 'border-white/40',
     animate: 'animate-spin',
   },
   completed: {
     icon: CheckCircle,
-    color: 'text-nvidia-green-light',
-    bgColor: 'bg-nvidia-green/10',
-    borderColor: 'border-nvidia-green/30',
+    color: 'text-white',
+    bgColor: 'bg-white/10',
+    borderColor: 'border-white/30',
   },
   failed: {
     icon: AlertCircle,
@@ -39,9 +39,9 @@ const statusConfig = {
   },
   pending: {
     icon: Clock,
-    color: 'text-pnc-orange',
-    bgColor: 'bg-pnc-orange/10',
-    borderColor: 'border-pnc-orange/30',
+    color: 'text-silver',
+    bgColor: 'bg-silver/10',
+    borderColor: 'border-silver/30',
   },
 };
 
@@ -60,7 +60,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
     >
       {/* Subtle gradient overlay */}
       {agent.status === 'running' && (
-        <div className="absolute inset-0 bg-gradient-to-br from-nvidia-green/5 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
       )}
       
       <div className="relative flex items-start gap-4">
@@ -72,7 +72,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-base font-display font-semibold text-gray-100 truncate">
+            <h3 className="text-base font-display font-semibold text-silver truncate">
               {agent.name}
             </h3>
             <span className={`badge ${
@@ -85,7 +85,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
             </span>
           </div>
           
-          <p className="text-xs text-gray-400 leading-relaxed mb-3">
+          <p className="text-xs text-silver/70 leading-relaxed mb-3">
             {agent.goal}
           </p>
           
@@ -93,7 +93,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ agent, onClick }) => {
           {agent.status === 'running' && (
             <div className="relative h-1 bg-dark-border rounded-full overflow-hidden">
               <motion.div
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-nvidia-green to-nvidia-green-light rounded-full"
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-white to-silver rounded-full"
                 initial={{ width: '0%' }}
                 animate={{ width: ['0%', '100%'] }}
                 transition={{

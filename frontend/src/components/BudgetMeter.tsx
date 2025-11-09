@@ -79,23 +79,23 @@ export const BudgetMeter: React.FC = () => {
   const getStatusColor = (percentage: number): string => {
     if (percentage >= 95) return 'text-red-500';
     if (percentage >= 85) return 'text-red-400';
-    if (percentage >= 75) return 'text-yellow-400';
-    if (percentage >= 50) return 'text-blue-400';
-    return 'text-green-400';
+    if (percentage >= 75) return 'text-silver';
+    if (percentage >= 50) return 'text-silver';
+    return 'text-white';
   };
 
   const getBgColor = (percentage: number): string => {
     if (percentage >= 95) return 'bg-red-500/30';
     if (percentage >= 85) return 'bg-red-500/20';
-    if (percentage >= 75) return 'bg-yellow-500/20';
-    if (percentage >= 50) return 'bg-blue-500/20';
-    return 'bg-green-500/20';
+    if (percentage >= 75) return 'bg-silver/20';
+    if (percentage >= 50) return 'bg-silver/20';
+    return 'bg-white/20';
   };
 
   if (loading || !budget) {
     return (
       <div className="card p-4">
-        <div className="flex items-center gap-2 text-gray-400">
+        <div className="flex items-center gap-2 text-silver/70">
           <DollarSign className="w-4 h-4" />
           <span className="text-sm">Loading budget...</span>
         </div>
@@ -112,8 +112,8 @@ export const BudgetMeter: React.FC = () => {
     <div className="card p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-neon-cyan" />
-          <span className="text-sm font-medium text-gray-300">Budget</span>
+          <DollarSign className="w-4 h-4 text-white" />
+          <span className="text-sm font-medium text-silver">Budget</span>
         </div>
         {!isEditing ? (
           <div className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export const BudgetMeter: React.FC = () => {
               className="p-1.5 hover:bg-dark-lighter rounded transition-colors"
               title="Edit budget"
             >
-              <Edit2 className="w-3.5 h-3.5 text-gray-400 hover:text-neon-cyan" />
+              <Edit2 className="w-3.5 h-3.5 text-silver/70 hover:text-white" />
             </button>
           </div>
         ) : (
@@ -135,7 +135,7 @@ export const BudgetMeter: React.FC = () => {
               className="p-1.5 hover:bg-dark-lighter rounded transition-colors"
               title="Save"
             >
-              <Check className="w-4 h-4 text-green-400" />
+              <Check className="w-4 h-4 text-white" />
             </button>
             <button
               onClick={handleCancelEdit}
@@ -154,22 +154,22 @@ export const BudgetMeter: React.FC = () => {
             type="number"
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            className="w-full px-3 py-2 bg-dark-lighter border border-dark-border rounded text-white text-sm focus:border-neon-cyan focus:outline-none"
+            className="w-full px-3 py-2 bg-dark-lighter border border-dark-border rounded text-silver text-sm focus:border-white focus:outline-none"
             placeholder="Enter budget amount"
             autoFocus
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-silver/50 mt-1">
             Enter budget in dollars (e.g., 40, 1000000, 6000000000)
           </p>
         </div>
       ) : (
         <div className="mb-2">
-          <div className="flex justify-between text-xs text-gray-400 mb-1">
+          <div className="flex justify-between text-xs text-silver/70 mb-1">
             <span>Used: {formatBudgetValue(budget.used_budget || 0)}</span>
             <span>Remaining: {formatBudgetValue(budget.remaining_budget || budget.total_budget)}</span>
           </div>
           <div className="mb-1">
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-silver/50">
               Total: {formatBudgetValue(budget.total_budget || 40)}
             </div>
           </div>
@@ -183,7 +183,7 @@ export const BudgetMeter: React.FC = () => {
       )}
 
       {!isEditing && budget.recommendations && budget.recommendations.length > 0 && (
-        <div className="mt-2 text-xs text-gray-400">
+        <div className="mt-2 text-xs text-silver/70">
           {budget.recommendations[0]}
         </div>
       )}

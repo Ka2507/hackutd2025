@@ -4,13 +4,16 @@
 
 @layer base {
   body {
-    @apply bg-dark text-gray-100 font-sans antialiased;
-    background-image: radial-gradient(circle at 20% 50%, rgba(118, 185, 0, 0.03) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 80%, rgba(0, 71, 187, 0.03) 0%, transparent 50%);
+    @apply font-sans antialiased;
+    background-color: #020305;
+    color: #707b81;
+    background-image: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, rgba(112, 123, 129, 0.02) 0%, transparent 50%);
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-display tracking-tight;
+    color: #707b81;
   }
 }
 
@@ -21,30 +24,51 @@
   }
 
   .btn-primary {
-    @apply bg-nvidia-green text-dark hover:bg-nvidia-green-light 
-           shadow-lg shadow-nvidia-green/20 hover:shadow-nvidia-green/40
-           hover:scale-105 active:scale-95;
+    background-color: #ffffff;
+    color: #020305;
+    box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.1);
+  }
+  
+  .btn-primary:hover {
+    background-color: #f5f5f5;
+    box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.2), 0 4px 6px -2px rgba(255, 255, 255, 0.2);
   }
 
   .btn-secondary {
-    @apply bg-pnc-blue text-white hover:bg-pnc-blue-light 
-           shadow-lg shadow-pnc-blue/20 hover:shadow-pnc-blue/40
-           hover:scale-105 active:scale-95;
+    background-color: #707b81;
+    color: #ffffff;
+    box-shadow: 0 10px 15px -3px rgba(112, 123, 129, 0.2), 0 4px 6px -2px rgba(112, 123, 129, 0.2);
+  }
+  
+  .btn-secondary:hover {
+    background-color: #8a9399;
+    box-shadow: 0 10px 15px -3px rgba(112, 123, 129, 0.3), 0 4px 6px -2px rgba(112, 123, 129, 0.3);
   }
 
   .btn-ghost {
-    @apply bg-transparent border border-dark-border text-gray-300 
-           hover:bg-dark-card hover:border-nvidia-green/50;
+    background-color: transparent;
+    border: 1px solid #1a1f24;
+    color: #707b81;
+  }
+  
+  .btn-ghost:hover {
+    background-color: #0f1418;
+    border-color: rgba(255, 255, 255, 0.3);
   }
 
   .card {
-    @apply bg-dark-card border border-dark-border rounded-xl p-6 
-           transition-all duration-300 backdrop-blur-sm;
+    @apply rounded-xl p-6 transition-all duration-300 backdrop-blur-sm;
+    background-color: #0f1418;
+    border: 1px solid #1a1f24;
   }
 
   .card-hover {
-    @apply hover:border-nvidia-green/50 hover:shadow-xl 
-           hover:shadow-nvidia-green/10 hover:-translate-y-1;
+    @apply hover:-translate-y-1;
+  }
+  
+  .card-hover:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 25px -5px rgba(255, 255, 255, 0.05), 0 10px 10px -5px rgba(255, 255, 255, 0.05);
   }
 
   .card-interactive {
@@ -52,10 +76,21 @@
   }
 
   .input {
-    @apply bg-dark-lighter border border-dark-border rounded-lg px-4 py-2.5 
-           text-gray-100 placeholder-gray-500 
-           focus:outline-none focus:border-nvidia-green focus:ring-2 
-           focus:ring-nvidia-green/20 transition-all duration-200;
+    @apply rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 
+           transition-all duration-200;
+    background-color: #0a0d10;
+    border: 1px solid #1a1f24;
+    color: #707b81;
+  }
+  
+  .input::placeholder {
+    color: #707b81;
+    opacity: 0.5;
+  }
+  
+  .input:focus {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
   }
 
   .badge {
@@ -63,23 +98,38 @@
   }
 
   .badge-success {
-    @apply bg-nvidia-green/20 text-nvidia-green-light border border-nvidia-green/30;
+    @apply px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .badge-warning {
-    @apply bg-pnc-orange/20 text-pnc-orange border border-pnc-orange/30;
+    @apply px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+    background-color: rgba(112, 123, 129, 0.2);
+    color: #8a9399;
+    border: 1px solid rgba(112, 123, 129, 0.3);
   }
 
   .badge-error {
-    @apply bg-red-500/20 text-red-400 border border-red-500/30;
+    @apply px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
   }
 
   .badge-info {
-    @apply bg-pnc-blue/20 text-pnc-blue-light border border-pnc-blue/30;
+    @apply px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-nvidia-green to-pnc-blue bg-clip-text text-transparent;
+    @apply text-transparent;
+    background-image: linear-gradient(to right, #ffffff, #707b81);
+    -webkit-background-clip: text;
+    background-clip: text;
   }
 
   .gradient-border {
@@ -92,7 +142,7 @@
     inset: 0;
     border-radius: 0.75rem;
     padding: 1px;
-    background: linear-gradient(135deg, #76B900, #0047BB);
+    background: linear-gradient(135deg, #ffffff, #707b81);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -130,19 +180,26 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-dark-lighter;
+  background-color: #0a0d10;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-dark-border rounded-full hover:bg-nvidia-green/50;
+  background-color: #1a1f24;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Selection styling */
 ::selection {
-  @apply bg-nvidia-green/30 text-white;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 ::-moz-selection {
-  @apply bg-nvidia-green/30 text-white;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 

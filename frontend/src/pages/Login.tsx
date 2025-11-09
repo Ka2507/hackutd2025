@@ -76,7 +76,7 @@ export const Login: React.FC = () => {
             <h1 className="text-4xl font-display font-bold gradient-text mb-2">
               ProdigyPM
             </h1>
-            <p className="text-gray-400">
+            <p className="text-silver/70">
               AI Co-Pilot for Product Managers
             </p>
           </div>
@@ -85,12 +85,12 @@ export const Login: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Username/Email */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="username" className="block text-sm font-medium text-silver mb-2">
                 Username or Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-500" />
+                  <Mail className="h-5 w-5 text-silver/50" />
                 </div>
                 <input
                   id="username"
@@ -107,12 +107,12 @@ export const Login: React.FC = () => {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-silver mb-2">
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-500" />
+                  <Lock className="h-5 w-5 text-silver/50" />
                 </div>
                 <input
                   id="password"
@@ -130,9 +130,9 @@ export const Login: React.FC = () => {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-500 hover:text-gray-300" />
+                    <EyeOff className="h-5 w-5 text-silver/50 hover:text-silver" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-500 hover:text-gray-300" />
+                    <Eye className="h-5 w-5 text-silver/50 hover:text-silver" />
                   )}
                 </button>
               </div>
@@ -142,7 +142,7 @@ export const Login: React.FC = () => {
             <div className="flex items-center justify-end">
               <button
                 type="button"
-                className="text-sm text-gray-400 hover:text-neon-cyan transition-colors"
+                className="text-sm text-silver/70 hover:text-white transition-colors"
               >
                 Forgot username or password?
               </button>
@@ -183,7 +183,7 @@ export const Login: React.FC = () => {
               <div className="w-full border-t border-dark-border"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-dark-card text-gray-400">Or continue with</span>
+              <span className="px-2 bg-dark-card text-silver/70">Or continue with</span>
             </div>
           </div>
 
@@ -192,7 +192,7 @@ export const Login: React.FC = () => {
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-dark-border rounded-lg bg-dark-lighter hover:bg-dark-border transition-colors text-gray-300"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-dark-border rounded-lg bg-dark-lighter hover:bg-dark-border transition-colors text-silver"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -206,7 +206,7 @@ export const Login: React.FC = () => {
             <button
               type="button"
               onClick={handleOutlookLogin}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-dark-border rounded-lg bg-dark-lighter hover:bg-dark-border transition-colors text-gray-300"
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-dark-border rounded-lg bg-dark-lighter hover:bg-dark-border transition-colors text-silver"
             >
               <svg className="w-6 h-6" viewBox="0 0 48 48" fill="none">
                 {/* Main blue rounded square with O */}
@@ -236,7 +236,7 @@ export const Login: React.FC = () => {
 
         {/* Footer */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-silver/50">
             ProdigyPM v1.0.0
           </p>
         </div>

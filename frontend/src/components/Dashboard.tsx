@@ -94,13 +94,13 @@ export const Dashboard: React.FC = () => {
     }));
 
   return (
-    <div className="min-h-screen bg-charcoal p-6">
+    <div className="min-h-screen bg-dark p-6">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-display font-bold gradient-text mb-2">
           ProdigyPM
         </h1>
-        <p className="text-gray-400">Your AI Co-Pilot for Product Management</p>
+        <p className="text-silver/70">Your AI Co-Pilot for Product Management</p>
       </div>
 
       {/* Budget Status & System Status */}
@@ -109,16 +109,16 @@ export const Dashboard: React.FC = () => {
         <div className="card p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-400 mb-1">System Status</p>
-              <h4 className="text-sm font-semibold text-white">All Systems Operational</h4>
+              <p className="text-xs text-silver/70 mb-1">System Status</p>
+              <h4 className="text-sm font-semibold text-silver">All Systems Operational</h4>
             </div>
             <div className="flex flex-col items-end gap-1">
-              <span className="text-xs text-gray-400">9 Agents</span>
-              <span className="text-xs text-green-400">Active</span>
+              <span className="text-xs text-silver/70">9 Agents</span>
+              <span className="text-xs text-white">Active</span>
             </div>
           </div>
           <div className="mt-3 pt-3 border-t border-dark-border">
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-silver/70">
               ✨ Adaptive Workflows • Risk Assessment • Smart Prioritization • Agent Collaboration
             </p>
           </div>
@@ -128,7 +128,7 @@ export const Dashboard: React.FC = () => {
       {/* Quick Actions */}
       <div className="mb-8 card">
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Play className="w-5 h-5 text-neon-cyan" />
+          <Play className="w-5 h-5 text-white" />
           Quick Actions
         </h2>
         <div className="flex gap-4">
@@ -146,7 +146,7 @@ export const Dashboard: React.FC = () => {
               ))}
             </select>
             {selectedWorkflow && (
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-silver/70 mt-1">
                 {workflows.find(w => w.value === selectedWorkflow)?.description}
               </p>
             )}
@@ -166,7 +166,7 @@ export const Dashboard: React.FC = () => {
       {demoScenarios.length > 0 && (
         <div className="mb-8 card">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Rocket className="w-5 h-5 text-orange-400" />
+            <Rocket className="w-5 h-5 text-white" />
             Demo Scenarios
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -174,15 +174,15 @@ export const Dashboard: React.FC = () => {
               <button
                 key={scenario.key}
                 onClick={() => handleRunDemo(scenario.key)}
-                className="p-4 bg-dark-lighter hover:bg-dark-border rounded-lg border border-dark-border transition-all text-left group hover:border-neon-cyan"
+                className="p-4 bg-dark-lighter hover:bg-dark-border rounded-lg border border-dark-border transition-all text-left group hover:border-white"
               >
-                <div className="font-medium text-white mb-2 group-hover:text-neon-cyan transition-colors">
+                <div className="font-medium text-silver mb-2 group-hover:text-white transition-colors">
                   {scenario.name}
                 </div>
-                <div className="text-xs text-gray-400 line-clamp-2">
+                <div className="text-xs text-silver/70 line-clamp-2">
                   {scenario.description}
                 </div>
-                <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                <div className="mt-3 flex items-center gap-2 text-xs text-silver/50">
                   <Play className="w-3 h-3" />
                   <span>Click to run</span>
                 </div>
@@ -194,7 +194,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Tabs */}
       <div className="mb-6">
-        <div className="flex gap-2 border-b border-gray-300">
+        <div className="flex gap-2 border-b border-dark-border">
           {[
             { id: 'agents', label: 'Agents', icon: Layers },
             { id: 'visualization', label: 'Workflow', icon: Network },
@@ -210,8 +210,8 @@ export const Dashboard: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`px-6 py-3 font-medium transition-colors relative ${
                   activeTab === tab.id
-                    ? 'text-neon-cyan'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'text-white'
+                    : 'text-silver/70 hover:text-silver'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export const Dashboard: React.FC = () => {
                 {activeTab === tab.id && (
                   <motion.div
                     layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-neon-cyan"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
                   />
                 )}
               </button>
@@ -272,15 +272,15 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="space-y-4">
               <div className="card p-4">
-                <h4 className="text-sm font-semibold text-white mb-2">How Templates Work</h4>
-                <p className="text-xs text-gray-400 leading-relaxed">
+                <h4 className="text-sm font-semibold text-silver mb-2">How Templates Work</h4>
+                <p className="text-xs text-silver/70 leading-relaxed">
                   Templates are pre-configured workflows optimized for specific PM tasks. 
                   Select a template to automatically configure the best agent sequence.
                 </p>
               </div>
               <div className="card p-4">
-                <h4 className="text-sm font-semibold text-white mb-2">Adaptive Workflow</h4>
-                <p className="text-xs text-gray-400 leading-relaxed">
+                <h4 className="text-sm font-semibold text-silver mb-2">Adaptive Workflow</h4>
+                <p className="text-xs text-silver/70 leading-relaxed">
                   The adaptive workflow uses AI to dynamically select agents based on your task. 
                   It learns from similar past projects to optimize execution.
                 </p>
@@ -348,8 +348,8 @@ export const Dashboard: React.FC = () => {
               })
             ) : (
               <div className="card text-center py-12">
-                <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400">No activity yet. Run a workflow to get started!</p>
+                <History className="w-12 h-12 text-silver/70 mx-auto mb-4" />
+                <p className="text-silver/70">No activity yet. Run a workflow to get started!</p>
               </div>
             )}
           </div>

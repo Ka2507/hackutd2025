@@ -83,13 +83,13 @@ export const Home: React.FC = () => {
               onClick={() => navigate('/')}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <Sparkles className="w-6 h-6 text-primary-light" />
+              <Sparkles className="w-6 h-6 text-white" />
               <span className="text-xl font-display font-bold gradient-text">ProdigyPM</span>
             </button>
             
             <button
               onClick={handleSignOut}
-              className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-silver hover:text-white transition-colors"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out</span>
@@ -100,13 +100,13 @@ export const Home: React.FC = () => {
 
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-silver/5" />
         
         {/* Animated grid background */}
         <div className="absolute inset-0 opacity-10" 
              style={{
-               backgroundImage: `linear-gradient(rgba(173, 181, 189, 0.3) 1px, transparent 1px),
-                                linear-gradient(90deg, rgba(173, 181, 189, 0.3) 1px, transparent 1px)`,
+               backgroundImage: `linear-gradient(rgba(112, 123, 129, 0.3) 1px, transparent 1px),
+                                linear-gradient(90deg, rgba(112, 123, 129, 0.3) 1px, transparent 1px)`,
                backgroundSize: '50px 50px'
              }} 
         />
@@ -120,8 +120,8 @@ export const Home: React.FC = () => {
           >
             {/* Logo/Title */}
             <div className="mb-6 inline-flex items-center gap-3 px-4 py-2 bg-dark-card border border-dark-border rounded-full">
-              <Sparkles className="w-5 h-5 text-primary-light" />
-              <span className="text-sm font-medium text-gray-300">
+              <Sparkles className="w-5 h-5 text-white" />
+              <span className="text-sm font-medium text-silver">
                 Powered by NVIDIA Nemotron
               </span>
             </div>
@@ -130,11 +130,11 @@ export const Home: React.FC = () => {
               <span className="gradient-text">ProdigyPM</span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-300 mb-4 font-medium">
+            <p className="text-xl md:text-2xl text-silver mb-4 font-medium">
               Your AI Co-Pilot for Product Management
             </p>
             
-            <p className="text-lg text-gray-400 mb-12 max-w-2xl mx-auto">
+            <p className="text-lg text-silver/70 mb-12 max-w-2xl mx-auto">
               Multi-agent AI platform that helps Product Managers plan, research, 
               and automate workflows using advanced reasoning and local-first AI.
             </p>
@@ -149,7 +149,7 @@ export const Home: React.FC = () => {
               </button>
               <button
                 onClick={() => setShowPRDSelection(true)}
-                className="btn btn-secondary text-lg px-8 py-4 w-full sm:w-auto bg-gradient-to-r from-orange-400/20 to-neon-cyan/20 border-orange-400/50 hover:border-orange-400"
+                className="btn btn-secondary text-lg px-8 py-4 w-full sm:w-auto bg-gradient-to-r from-silver/20 to-white/20 border-silver/50 hover:border-white"
               >
                 <FileText className="w-5 h-5" />
                 Generate PRD
@@ -193,16 +193,16 @@ export const Home: React.FC = () => {
                 className="card card-hover group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-accent/20 border border-accent/30 
+                  <div className="w-10 h-10 bg-white/10 border border-white/20 
                                 rounded-lg flex items-center justify-center flex-shrink-0
-                                group-hover:bg-accent/30 transition-colors">
-                    <Bot className="w-5 h-5 text-primary-light" />
+                                group-hover:bg-white/20 transition-colors">
+                    <Bot className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-display font-semibold text-gray-100 mb-1">
+                    <h3 className="font-display font-semibold text-silver mb-1">
                       {agent.name}
                     </h3>
-                    <p className="text-xs text-gray-400 leading-relaxed">
+                    <p className="text-xs text-silver/70 leading-relaxed">
                       {agent.description}
                     </p>
                   </div>

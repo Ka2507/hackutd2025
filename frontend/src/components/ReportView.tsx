@@ -27,32 +27,32 @@ export const ReportView: React.FC<ReportViewProps> = () => {
       value: '12.5h',
       change: '+15%',
       icon: Clock,
-      color: 'text-neon-cyan',
-      bgColor: 'bg-neon-cyan/10',
+      color: 'text-white',
+      bgColor: 'bg-white/10',
     },
     {
       label: 'Tasks Completed',
       value: '87',
       change: '+23%',
       icon: Target,
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/10',
+      color: 'text-white',
+      bgColor: 'bg-white/10',
     },
     {
       label: 'AI Decisions',
       value: '145',
       change: '+18%',
       icon: Zap,
-      color: 'text-neon-orange',
-      bgColor: 'bg-neon-orange/10',
+      color: 'text-silver',
+      bgColor: 'bg-silver/10',
     },
     {
       label: 'Efficiency',
       value: '94%',
       change: '+5%',
       icon: TrendingUp,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/10',
+      color: 'text-silver',
+      bgColor: 'bg-silver/10',
     },
   ];
 
@@ -72,11 +72,11 @@ export const ReportView: React.FC<ReportViewProps> = () => {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">{metric.label}</p>
-                  <h3 className="text-3xl font-bold text-white mb-1">
+                  <p className="text-sm text-silver/70 mb-1">{metric.label}</p>
+                  <h3 className="text-3xl font-bold text-silver mb-1">
                     {metric.value}
                   </h3>
-                  <span className="text-sm text-green-400">{metric.change}</span>
+                  <span className="text-sm text-white">{metric.change}</span>
                 </div>
                 <div className={`${metric.bgColor} p-3 rounded-lg`}>
                   <Icon className={`w-6 h-6 ${metric.color}`} />
@@ -99,25 +99,25 @@ export const ReportView: React.FC<ReportViewProps> = () => {
           <AreaChart data={activityData}>
             <defs>
               <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00FFFF" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#00FFFF" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#ffffff" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#ffffff" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2A2E3A" />
-            <XAxis dataKey="name" stroke="#5A5E6A" />
-            <YAxis stroke="#5A5E6A" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#1a1f24" />
+            <XAxis dataKey="name" stroke="#707b81" />
+            <YAxis stroke="#707b81" />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#1A1D29',
-                border: '1px solid #2A2E3A',
+                backgroundColor: '#0f1418',
+                border: '1px solid #1a1f24',
                 borderRadius: '8px',
-                color: '#fff',
+                color: '#707b81',
               }}
             />
             <Area
               type="monotone"
               dataKey="tasks"
-              stroke="#00FFFF"
+              stroke="#ffffff"
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorTasks)"
@@ -136,18 +136,18 @@ export const ReportView: React.FC<ReportViewProps> = () => {
         <h3 className="text-lg font-semibold mb-4">Agent Performance</h3>
         <div className="space-y-4">
           {[
-            { name: 'StrategyAgent', usage: 85, color: 'bg-neon-cyan' },
-            { name: 'ResearchAgent', usage: 72, color: 'bg-neon-orange' },
-            { name: 'DevAgent', usage: 68, color: 'bg-green-400' },
-            { name: 'GtmAgent', usage: 55, color: 'bg-purple-400' },
-            { name: 'AutomationAgent', usage: 45, color: 'bg-yellow-400' },
+            { name: 'StrategyAgent', usage: 85, color: 'bg-white' },
+            { name: 'ResearchAgent', usage: 72, color: 'bg-silver' },
+            { name: 'DevAgent', usage: 68, color: 'bg-white' },
+            { name: 'GtmAgent', usage: 55, color: 'bg-silver' },
+            { name: 'AutomationAgent', usage: 45, color: 'bg-white' },
           ].map((agent) => (
             <div key={agent.name}>
               <div className="flex justify-between mb-2">
-                <span className="text-sm text-gray-300">{agent.name}</span>
-                <span className="text-sm text-gray-400">{agent.usage}%</span>
+                <span className="text-sm text-silver">{agent.name}</span>
+                <span className="text-sm text-silver/70">{agent.usage}%</span>
               </div>
-              <div className="h-2 bg-gray-300 rounded-full overflow-hidden">
+              <div className="h-2 bg-dark-border rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${agent.usage}%` }}

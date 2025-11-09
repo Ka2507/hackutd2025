@@ -70,8 +70,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             >
               {message.role !== 'user' && (
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-neon-cyan/20 border border-neon-cyan flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-neon-cyan" />
+                  <div className="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-white" />
                   </div>
                 </div>
               )}
@@ -79,15 +79,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div
                 className={`max-w-[70%] rounded-2xl px-4 py-3 ${
                   message.role === 'user'
-                    ? 'bg-gradient-to-r from-neon-cyan to-neon-orange text-charcoal'
-                    : 'bg-gray-200 text-white border border-gray-300'
+                    ? 'bg-gradient-to-r from-white to-silver text-dark'
+                    : 'bg-dark-card text-silver border border-dark-border'
                 }`}
               >
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">
                   {message.content}
                 </p>
                 <span className={`text-xs mt-2 block ${
-                  message.role === 'user' ? 'text-charcoal/70' : 'text-gray-400'
+                  message.role === 'user' ? 'text-dark/70' : 'text-silver/70'
                 }`}>
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
@@ -95,8 +95,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               
               {message.role === 'user' && (
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-gray-300 border border-gray-400 flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-silver/30 border border-silver/50 flex items-center justify-center">
+                    <User className="w-5 h-5 text-dark" />
                   </div>
                 </div>
               )}
@@ -111,15 +111,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             className="flex gap-3"
           >
             <div className="flex-shrink-0">
-              <div className="w-8 h-8 rounded-full bg-neon-cyan/20 border border-neon-cyan flex items-center justify-center">
-                <Bot className="w-5 h-5 text-neon-cyan animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-white animate-pulse" />
               </div>
             </div>
-            <div className="bg-gray-200 rounded-2xl px-4 py-3 border border-gray-300">
+            <div className="bg-dark-card rounded-2xl px-4 py-3 border border-dark-border">
               <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-2 h-2 rounded-full bg-silver/70 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 rounded-full bg-silver/70 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 rounded-full bg-silver/70 animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </motion.div>
@@ -129,7 +129,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-300 p-4">
+      <div className="border-t border-dark-border p-4">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"

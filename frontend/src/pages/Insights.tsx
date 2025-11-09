@@ -10,7 +10,7 @@ export const Insights: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-charcoal p-6">
+    <div className="min-h-screen bg-dark p-6">
       {/* Header */}
       <div className="mb-8">
         <button
@@ -28,7 +28,7 @@ export const Insights: React.FC = () => {
           <h1 className="text-4xl font-display font-bold gradient-text mb-2">
             Insights & Analytics
           </h1>
-          <p className="text-gray-400">
+          <p className="text-silver/70">
             Track your AI agent performance and productivity gains
           </p>
         </motion.div>
