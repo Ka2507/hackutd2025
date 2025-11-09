@@ -1,18 +1,48 @@
 /**
  * Home Page - Modern landing page with NVIDIA/PNC styling
  */
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Zap, Shield, Bot, ArrowRight, Cpu, Network, TrendingUp } from 'lucide-react';
+import { Sparkles, Zap, Shield, Bot, ArrowRight, Cpu, Network, TrendingUp, LogOut, FileText } from 'lucide-react';
+import PRDSelectionModal from '../components/PRDSelectionModal';
+import DetailedPRDModal from '../components/DetailedPRDModal';
+import QuickPRDModal from '../components/QuickPRDModal';
+import PRDViewer from '../components/PRDViewer';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
+  const [showPRDSelection, setShowPRDSelection] = useState(false);
+  const [showDetailedPRD, setShowDetailedPRD] = useState(false);
+  const [showQuickPRD, setShowQuickPRD] = useState(false);
+  const [showPRDViewer, setShowPRDViewer] = useState(false);
+  const [prdData, setPRDData] = useState<any>(null);
+
+  const handleSignOut = () => {
+    // Clear any auth state if needed
+    navigate('/login');
+  };
+
+  const handlePRDComplete = (data: any) => {
+    setPRDData(data);
+    setShowPRDViewer(true);
+  };
+
+  const handleSelectDetailed = () => {
+    setShowPRDSelection(false);
+    setShowDetailedPRD(true);
+  };
+
+  const handleSelectQuick = () => {
+    setShowPRDSelection(false);
+    setShowQuickPRD(true);
+  };
 
   const features = [
     {
       icon: Cpu,
       title: 'Multi-Agent AI',
-      description: '9 specialized agents with adaptive workflows powered by NVIDIA Nemotron',
+      description: '9 specialized agents powered by NVIDIA Nemotron for strategic reasoning',
     },
     {
       icon: Zap,
@@ -39,21 +69,44 @@ export const Home: React.FC = () => {
     { name: 'Go-to-Market', description: 'Launch strategy & pricing' },
     { name: 'Automation', description: 'Workflow automation & reporting' },
     { name: 'Regulation', description: 'Compliance & risk assessment' },
-    { name: 'Risk Assessment', description: 'Proactive risk prediction & bottleneck detection' },
-    { name: 'Prioritization', description: 'Smart multi-factor feature prioritization' },
+    { name: 'Prioritization', description: 'RICE framework & feature prioritization' },
+    { name: 'Risk Assessment', description: 'Technical & business risk analysis' },
   ];
 
   return (
     <div className="min-h-screen bg-dark">
+      {/* Navigation Bar */}
+      <nav className="sticky top-0 z-50 bg-dark/80 backdrop-blur-lg border-b border-dark-border">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <button 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <Sparkles className="w-6 h-6 text-primary-light" />
+              <span className="text-xl font-display font-bold gradient-text">ProdigyPM</span>
+            </button>
+            
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-nvidia-green/5 via-transparent to-pnc-blue/5" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         
         {/* Animated grid background */}
-        <div className="absolute inset-0 opacity-20" 
+        <div className="absolute inset-0 opacity-10" 
              style={{
-               backgroundImage: `linear-gradient(rgba(118, 185, 0, 0.1) 1px, transparent 1px),
-                                linear-gradient(90deg, rgba(0, 71, 187, 0.1) 1px, transparent 1px)`,
+               backgroundImage: `linear-gradient(rgba(173, 181, 189, 0.3) 1px, transparent 1px),
+                                linear-gradient(90deg, rgba(173, 181, 189, 0.3) 1px, transparent 1px)`,
                backgroundSize: '50px 50px'
              }} 
         />
@@ -67,7 +120,7 @@ export const Home: React.FC = () => {
           >
             {/* Logo/Title */}
             <div className="mb-6 inline-flex items-center gap-3 px-4 py-2 bg-dark-card border border-dark-border rounded-full">
-              <Sparkles className="w-5 h-5 text-nvidia-green" />
+              <Sparkles className="w-5 h-5 text-primary-light" />
               <span className="text-sm font-medium text-gray-300">
                 Powered by NVIDIA Nemotron
               </span>
@@ -91,63 +144,25 @@ export const Home: React.FC = () => {
                 onClick={() => navigate('/dashboard')}
                 className="btn btn-primary text-lg px-8 py-4 w-full sm:w-auto"
               >
-                Get Started
+                Launch Dashboard
                 <ArrowRight className="w-5 h-5" />
               </button>
               <button
-                onClick={() => navigate('/insights')}
-                className="btn btn-ghost text-lg px-8 py-4 w-full sm:w-auto"
+                onClick={() => setShowPRDSelection(true)}
+                className="btn btn-secondary text-lg px-8 py-4 w-full sm:w-auto bg-gradient-to-r from-orange-400/20 to-neon-cyan/20 border-orange-400/50 hover:border-orange-400"
               >
-                View Demo
+                <FileText className="w-5 h-5" />
+                Generate PRD
+              </button>
+              <button
+                onClick={() => navigate('/insights')}
+                className="btn btn-secondary text-lg px-8 py-4 w-full sm:w-auto"
+              >
+                View Analytics
                 <TrendingUp className="w-5 h-5" />
               </button>
             </div>
           </motion.div>
-        </div>
-      </div>
-
-      {/* Features Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <h2 className="section-header">
-            Intelligent Agent System
-          </h2>
-          <p className="section-subtitle">
-            Powered by NVIDIA Nemotron for strategic orchestration
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + index * 0.1, duration: 0.8 }}
-                className="card card-hover card-interactive"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-14 h-14 mb-4 bg-gradient-to-br from-nvidia-green/20 to-pnc-blue/20 
-                                border border-nvidia-green/30 rounded-xl flex items-center justify-center">
-                    <Icon className="w-7 h-7 text-nvidia-green" />
-                  </div>
-                  <h3 className="text-lg font-display font-semibold text-gray-100 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            );
-          })}
         </div>
       </div>
 
@@ -161,7 +176,7 @@ export const Home: React.FC = () => {
             className="text-center mb-16"
           >
             <h2 className="section-header">
-              Nine Specialized Agents
+              Seven Specialized Agents
             </h2>
             <p className="section-subtitle">
               Each agent brings unique expertise to your product workflow
@@ -178,10 +193,10 @@ export const Home: React.FC = () => {
                 className="card card-hover group"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-pnc-blue/20 border border-pnc-blue/30 
+                  <div className="w-10 h-10 bg-accent/20 border border-accent/30 
                                 rounded-lg flex items-center justify-center flex-shrink-0
-                                group-hover:bg-pnc-blue/30 transition-colors">
-                    <Bot className="w-5 h-5 text-pnc-blue-light" />
+                                group-hover:bg-accent/30 transition-colors">
+                    <Bot className="w-5 h-5 text-primary-light" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-display font-semibold text-gray-100 mb-1">
@@ -221,6 +236,32 @@ export const Home: React.FC = () => {
           </button>
         </motion.div>
       </div>
+
+      {/* PRD Modals */}
+      <PRDSelectionModal
+        isOpen={showPRDSelection}
+        onClose={() => setShowPRDSelection(false)}
+        onSelectDetailed={handleSelectDetailed}
+        onSelectQuick={handleSelectQuick}
+      />
+      
+      <DetailedPRDModal
+        isOpen={showDetailedPRD}
+        onClose={() => setShowDetailedPRD(false)}
+        onComplete={handlePRDComplete}
+      />
+      
+      <QuickPRDModal
+        isOpen={showQuickPRD}
+        onClose={() => setShowQuickPRD(false)}
+        onComplete={handlePRDComplete}
+      />
+      
+      <PRDViewer
+        isOpen={showPRDViewer}
+        onClose={() => setShowPRDViewer(false)}
+        prdData={prdData}
+      />
     </div>
   );
 };

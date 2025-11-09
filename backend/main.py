@@ -16,8 +16,12 @@ from db.context_store import context_store
 from orchestrator.task_graph import task_graph, WorkflowType
 from orchestrator.memory_manager import memory_manager
 from orchestrator.nemotron_bridge import nemotron_bridge
+from orchestrator.cost_aware_orchestrator import CostAwareOrchestrator
 from orchestrator.workflow_templates import workflow_template_engine
 from integrations import jira_api, slack_api, figma_api, reddit_api
+
+# Initialize cost-aware orchestrator
+cost_orchestrator = CostAwareOrchestrator(total_budget=40.0)
 
 
 # Initialize FastAPI app
@@ -98,13 +102,6 @@ class AgentTaskRequest(BaseModel):
     project_id: Optional[int] = None
 
 
-class RefinementRequest(BaseModel):
-    agent_name: str
-    original_output: Dict[str, Any]
-    feedback: str
-    context: Optional[Dict[str, Any]] = None
-
-
 class RiskAssessmentRequest(BaseModel):
     workflow_state: Dict[str, Any]
     project_id: Optional[int] = None
@@ -123,8 +120,8 @@ class PrioritizationRequest(BaseModel):
 async def root():
     """Root endpoint"""
     return {
-        "app": settings.app_name,
-        "version": settings.app_version,
+        "app": settings.APP_NAME,
+        "version": settings.APP_VERSION,
         "status": "running",
         "docs": "/docs"
     }
@@ -385,56 +382,9 @@ async def list_workflows():
                 "type": WorkflowType.COMPLIANCE_CHECK.value,
                 "description": "Compliance and regulatory review",
                 "agents": ["regulation"]
-            },
-            {
-                "type": WorkflowType.ADAPTIVE.value,
-                "description": "AI-powered adaptive workflow (dynamically selects agents)",
-                "agents": ["adaptive"]
             }
         ]
     }
-
-
-@app.get("/api/v1/workflows/templates")
-async def list_workflow_templates():
-    """List available workflow templates"""
-    try:
-        templates = workflow_template_engine.list_templates()
-        return {
-            "success": True,
-            "templates": templates,
-            "count": len(templates)
-        }
-    except Exception as e:
-        logger.error(f"Error listing templates: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/v1/workflows/templates/recommend")
-async def recommend_template(project_description: str):
-    """Get recommended workflow template for a project"""
-    try:
-        context = {"description": project_description}
-        template = workflow_template_engine.get_recommended_template(context)
-        
-        if template:
-            return {
-                "success": True,
-                "recommended_template": {
-                    "name": template.name,
-                    "description": template.description,
-                    "agents": template.agents
-                }
-            }
-        else:
-            return {
-                "success": True,
-                "recommended_template": None,
-                "message": "No specific template recommended"
-            }
-    except Exception as e:
-        logger.error(f"Error recommending template: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/v1/workflows/history")
@@ -449,6 +399,49 @@ async def get_workflow_history(limit: int = 10):
         }
     except Exception as e:
         logger.error(f"Error getting workflow history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/generate_prd")
+async def generate_prd(workflow_id: str = None, project_id: int = None):
+    """
+    Generate PRD from completed workflow results.
+    
+    This endpoint can be called after running a full_feature_planning
+    workflow to generate a comprehensive PRD document.
+    """
+    try:
+        # For demo, we'll generate from the last workflow
+        # In production, fetch specific workflow by ID
+        
+        # Get latest workflow from history
+        history = task_graph.get_workflow_history(limit=1)
+        if not history:
+            raise HTTPException(
+                status_code=404,
+                detail="No workflow found to generate PRD from"
+            )
+        
+        # Execute PRD generator with mock workflow results
+        prd_result = await task_graph.prd_generator.execute({
+            "workflow_results": {
+                "steps": [],
+                "workflow": "full_feature_planning"
+            },
+            "product_name": "Sample Product",
+            "version": "1.0"
+        })
+        
+        return {
+            "success": True,
+            "prd": prd_result.get("result", {}),
+            "markdown": prd_result.get("result", {}).get("markdown", "")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating PRD: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -534,13 +527,53 @@ async def get_figma_file(file_key: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# WebSocket endpoint for real-time updates
+
+@app.websocket("/ws/agents")
+async def websocket_endpoint(websocket: WebSocket):
+    """
+    WebSocket endpoint for real-time agent updates
+    Clients connect here to receive live updates about agent execution
+    """
+    await manager.connect(websocket)
+    
+    try:
+        # Send initial status
+        await websocket.send_json({
+            "type": "connected",
+            "data": {
+                "message": "Connected to ProdigyPM agent updates",
+                "timestamp": datetime.now().isoformat(),
+                "agents": task_graph.get_agent_status()
+            }
+        })
+        
+        # Keep connection alive and handle incoming messages
+        while True:
+            data = await websocket.receive_text()
+            logger.debug(f"Received WebSocket message: {data}")
+            
+            # Echo back for now (can add command handling later)
+            await websocket.send_json({
+                "type": "echo",
+                "data": {"message": data}
+            })
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        logger.info("WebSocket client disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
+
+
 # Advanced Features Endpoints
 
 @app.post("/api/v1/risk/assess")
 async def assess_risk(request: RiskAssessmentRequest):
     """Assess project risks"""
     try:
-        risk_agent = task_graph.agents.get("risk")
+        risk_agent = task_graph.agents.get("risk_assessment")
         if not risk_agent:
             raise HTTPException(status_code=404, detail="Risk assessment agent not found")
         
@@ -582,35 +615,11 @@ async def prioritize_features(request: PrioritizationRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/v1/refine")
-async def refine_agent_output(request: RefinementRequest):
-    """Refine agent output based on feedback"""
-    try:
-        agent = task_graph.agents.get(request.agent_name)
-        if not agent:
-            raise HTTPException(status_code=404, detail=f"Agent {request.agent_name} not found")
-        
-        refined = await task_graph.collaboration.request_refinement(
-            agent_name=request.agent_name,
-            original_output=request.original_output,
-            feedback=request.feedback,
-            context=request.context or {}
-        )
-        
-        return {
-            "success": True,
-            "refined_output": refined
-        }
-    except Exception as e:
-        logger.error(f"Error refining output: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @app.get("/api/v1/budget/status")
 async def get_budget_status():
     """Get current budget status"""
     try:
-        budget_status = nemotron_bridge.cost_orchestrator.get_budget_status()
+        budget_status = cost_orchestrator.get_budget_status()
         return {
             "success": True,
             "budget": budget_status
@@ -620,94 +629,125 @@ async def get_budget_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/projects/{project_id}/similar")
-async def get_similar_projects(project_id: int, limit: int = 5):
-    """Find similar past projects"""
+class BudgetUpdateRequest(BaseModel):
+    total_budget: float
+
+
+@app.put("/api/v1/budget/update")
+async def update_budget(request: BudgetUpdateRequest):
+    """Update total budget"""
     try:
-        project = context_store.get_project(project_id)
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
-        
-        # Search for similar projects
-        similar = memory_manager.search(
-            query=project.get("description", project.get("name", "")),
-            top_k=limit,
-            filter_metadata={"type": "project"}
-        )
-        
+        cost_orchestrator.total_budget = request.total_budget
         return {
             "success": True,
-            "similar_projects": [
-                {
-                    "project_id": mem["metadata"].get("project_id"),
-                    "name": mem["metadata"].get("name"),
-                    "similarity_score": mem.get("score", 0),
-                    "metadata": mem["metadata"]
-                }
-                for mem in similar
-            ],
-            "count": len(similar)
+            "message": f"Budget updated to ${request.total_budget}",
+            "budget": cost_orchestrator.get_budget_status()
         }
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"Error finding similar projects: {e}")
+        logger.error(f"Error updating budget: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/v1/collaboration/history")
-async def get_collaboration_history(limit: int = 20):
-    """Get agent collaboration history"""
+@app.get("/api/v1/workflows/templates")
+async def list_workflow_templates():
+    """List available workflow templates"""
     try:
-        history = task_graph.collaboration.get_collaboration_history(limit)
+        templates = workflow_template_engine.list_templates()
         return {
             "success": True,
-            "collaboration_history": history,
-            "count": len(history)
+            "templates": templates
         }
     except Exception as e:
-        logger.error(f"Error getting collaboration history: {e}")
+        logger.error(f"Error listing templates: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# WebSocket endpoint for real-time updates
-
-@app.websocket("/ws/agents")
-async def websocket_endpoint(websocket: WebSocket):
-    """
-    WebSocket endpoint for real-time agent updates
-    Clients connect here to receive live updates about agent execution
-    """
-    await manager.connect(websocket)
-    
+@app.get("/api/v1/workflows/templates/recommend")
+async def recommend_template(project_description: str):
+    """Get recommended template based on project description"""
     try:
-        # Send initial status
-        await websocket.send_json({
-            "type": "connected",
-            "data": {
-                "message": "Connected to ProdigyPM agent updates",
-                "timestamp": datetime.now().isoformat(),
-                "agents": task_graph.get_agent_status()
+        template = workflow_template_engine.get_recommended_template({"description": project_description})
+        if not template:
+            return {
+                "success": True,
+                "template": None,
+                "message": "No specific template recommended, using adaptive workflow"
             }
-        })
         
-        # Keep connection alive and handle incoming messages
-        while True:
-            data = await websocket.receive_text()
-            logger.debug(f"Received WebSocket message: {data}")
-            
-            # Echo back for now (can add command handling later)
-            await websocket.send_json({
-                "type": "echo",
-                "data": {"message": data}
-            })
-            
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        logger.info("WebSocket client disconnected")
+        return {
+            "success": True,
+            "template": {
+                "name": template.name,
+                "description": template.description,
+                "agents": template.agents
+            }
+        }
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
-        manager.disconnect(websocket)
+        logger.error(f"Error recommending template: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/v1/generate_prd")
+async def generate_prd(workflow_id: Optional[str] = None, project_id: Optional[int] = None):
+    """Generate a Product Requirements Document"""
+    try:
+        # Get workflow history if workflow_id provided
+        workflow_data = {}
+        if workflow_id:
+            history = task_graph.get_workflow_history(limit=10)
+            for wf in history:
+                if wf.get("workflow_id") == workflow_id:
+                    workflow_data = wf
+                    break
+        
+        # Generate PRD structure
+        prd = {
+            "title": "Product Requirements Document",
+            "version": "1.0",
+            "created_at": datetime.now().isoformat(),
+            "workflow_id": workflow_id,
+            "project_id": project_id,
+            "sections": {
+                "overview": {
+                    "title": "Product Overview",
+                    "content": workflow_data.get("results", {}).get("steps", [{}])[0].get("output", {}).get("data", {}).get("refined_concept", "Product overview pending...")
+                },
+                "market_analysis": {
+                    "title": "Market Analysis",
+                    "content": workflow_data.get("results", {}).get("steps", [{}])[0].get("output", {}).get("data", {})
+                },
+                "user_research": {
+                    "title": "User Research",
+                    "content": workflow_data.get("results", {}).get("steps", [{}])[1].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 1 else {}
+                },
+                "technical_requirements": {
+                    "title": "Technical Requirements",
+                    "content": workflow_data.get("results", {}).get("steps", [{}])[2].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 2 else {}
+                },
+                "design_specs": {
+                    "title": "Design Specifications",
+                    "content": workflow_data.get("results", {}).get("steps", [{}])[3].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 3 else {}
+                },
+                "go_to_market": {
+                    "title": "Go-to-Market Strategy",
+                    "content": workflow_data.get("results", {}).get("steps", [{}])[4].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 4 else {}
+                },
+                "compliance": {
+                    "title": "Compliance & Security",
+                    "content": workflow_data.get("results", {}).get("steps", [{}])[5].get("output", {}).get("data", {}) if len(workflow_data.get("results", {}).get("steps", [])) > 5 else {}
+                }
+            },
+            "generated_by": "ProdigyPM Multi-Agent System",
+            "agents_used": list(task_graph.agents.keys())
+        }
+        
+        return {
+            "success": True,
+            "prd": prd
+        }
+    except Exception as e:
+        logger.error(f"Error generating PRD: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Startup and shutdown events
