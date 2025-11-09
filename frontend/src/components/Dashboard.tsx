@@ -9,6 +9,7 @@ import AgentPanel from './AgentPanel';
 import TaskCard from './TaskCard';
 import ChatInterface from './ChatInterface';
 import PRDViewer from './PRDViewer';
+import PRDGenerateModal from './PRDGenerateModal';
 import { apiClient } from '@/utils/apiClient';
 
 export const Dashboard: React.FC = () => {
@@ -18,6 +19,7 @@ export const Dashboard: React.FC = () => {
   const [showPRD, setShowPRD] = useState(false);
   const [prdData, setPRDData] = useState<any>(null);
   const [isGeneratingPRD, setIsGeneratingPRD] = useState(false);
+  const [showPRDModal, setShowPRDModal] = useState(false);
 
   const workflows = [
     { value: 'full_feature_planning', label: 'Full Feature Planning' },
@@ -31,21 +33,40 @@ export const Dashboard: React.FC = () => {
     if (!selectedWorkflow) return;
     
     try {
-      const result = await runWorkflow(selectedWorkflow, {
+      await runWorkflow(selectedWorkflow, {
         feature: 'AI Agent Dashboard',
         market: 'B2B SaaS',
       });
-      
-      // Auto-generate PRD if full feature planning was run
-      if (selectedWorkflow === 'full_feature_planning') {
-        setTimeout(() => handleGeneratePRD(), 2000);
-      }
     } catch (error) {
       console.error('Error running workflow:', error);
     }
   };
 
-  const handleGeneratePRD = async () => {
+  const handleGenerateDetailedPRD = async () => {
+    setIsGeneratingPRD(true);
+    try {
+      // First run full feature planning workflow
+      await runWorkflow('full_feature_planning', {
+        feature: 'AI Agent Dashboard',
+        market: 'B2B SaaS',
+      });
+      
+      // Then generate PRD
+      setTimeout(async () => {
+        const response = await apiClient.generatePRD();
+        if (response.success) {
+          setPRDData(response.prd);
+          setShowPRD(true);
+        }
+        setIsGeneratingPRD(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Error generating detailed PRD:', error);
+      setIsGeneratingPRD(false);
+    }
+  };
+
+  const handleGenerateQuickPRD = async () => {
     setIsGeneratingPRD(true);
     try {
       const response = await apiClient.generatePRD();
@@ -54,7 +75,7 @@ export const Dashboard: React.FC = () => {
         setShowPRD(true);
       }
     } catch (error) {
-      console.error('Error generating PRD:', error);
+      console.error('Error generating quick PRD:', error);
     } finally {
       setIsGeneratingPRD(false);
     }
@@ -105,7 +126,7 @@ export const Dashboard: React.FC = () => {
           <Play className="w-5 h-5 text-primary-light" />
           Quick Actions
         </h2>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <select
             value={selectedWorkflow}
             onChange={(e) => setSelectedWorkflow(e.target.value)}
@@ -118,22 +139,24 @@ export const Dashboard: React.FC = () => {
               </option>
             ))}
           </select>
-          <button
-            onClick={handleRunWorkflow}
-            disabled={!selectedWorkflow}
-            className="btn btn-primary disabled:opacity-50"
-          >
-            <Play className="w-5 h-5 mr-2" />
-            Run Workflow
-          </button>
-          <button
-            onClick={handleGeneratePRD}
-            disabled={isGeneratingPRD}
-            className="btn btn-secondary disabled:opacity-50"
-          >
-            <FileText className="w-5 h-5 mr-2" />
-            {isGeneratingPRD ? 'Generating...' : 'Generate PRD'}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleRunWorkflow}
+              disabled={!selectedWorkflow}
+              className="btn btn-primary disabled:opacity-50 flex-1 sm:flex-none"
+            >
+              <Play className="w-5 h-5" />
+              Run Workflow
+            </button>
+            <button
+              onClick={() => setShowPRDModal(true)}
+              disabled={isGeneratingPRD}
+              className="btn btn-secondary disabled:opacity-50 flex-1 sm:flex-none"
+            >
+              <FileText className="w-5 h-5" />
+              {isGeneratingPRD ? 'Generating...' : 'Generate PRD'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -171,6 +194,14 @@ export const Dashboard: React.FC = () => {
           })}
         </div>
       </div>
+
+      {/* PRD Generate Modal */}
+      <PRDGenerateModal
+        isOpen={showPRDModal}
+        onClose={() => setShowPRDModal(false)}
+        onGenerateDetailed={handleGenerateDetailedPRD}
+        onGenerateQuick={handleGenerateQuickPRD}
+      />
 
       {/* PRD Viewer Modal */}
       <AnimatePresence>

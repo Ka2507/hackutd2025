@@ -13,8 +13,9 @@ sys.path.append(str(Path(__file__).parent.parent))
 from agents import (
     StrategyAgent, ResearchAgent, DevAgent, PrototypeAgent,
     GtmAgent, AutomationAgent, RegulationAgent,
-    PrioritizationAgent, RiskAssessmentAgent, PRDAgent
+    PrioritizationAgent, RiskAssessmentAgent
 )
+from agents.prd_agent import PRDAgent
 from .memory_manager import memory_manager
 from .nemotron_bridge import nemotron_bridge
 from utils.logger import logger
@@ -48,9 +49,10 @@ class TaskGraph:
             "automation": AutomationAgent(self.shared_context),
             "regulation": RegulationAgent(self.shared_context),
             "prioritization": PrioritizationAgent(self.shared_context),
-            "risk_assessment": RiskAssessmentAgent(self.shared_context),
-            "prd": PRDAgent(self.shared_context)
+            "risk_assessment": RiskAssessmentAgent(self.shared_context)
         }
+        # PRD generator is not an agent, it's a utility
+        self.prd_generator = PRDAgent(self.shared_context)
         self.workflow_history = []
         logger.info("TaskGraph initialized with all agents")
     
@@ -209,14 +211,13 @@ class TaskGraph:
         })
         results["steps"].append(risk_result)
         
-        # Step 10: PRD Agent - Synthesize everything into PRD
-        logger.info("Step 10: PRD Agent - Generating final document")
-        prd_result = await self.agents["prd"].execute({
+        # Step 10: Generate PRD from all agent outputs
+        logger.info("Step 10: Generating PRD from workflow results")
+        prd_result = await self.prd_generator.execute({
             "workflow_results": results,
             "product_name": input_data.get("feature", "New Product"),
             "version": input_data.get("version", "1.0")
         })
-        results["steps"].append(prd_result)
         results["prd"] = prd_result.get("result", {})
         
         # Generate summary

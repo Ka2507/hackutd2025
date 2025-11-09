@@ -405,9 +405,8 @@ async def generate_prd(workflow_id: str = None, project_id: int = None):
                 detail="No workflow found to generate PRD from"
             )
         
-        # Execute PRD agent with mock workflow results
-        prd_agent = task_graph.agents["prd"]
-        prd_result = await prd_agent.execute({
+        # Execute PRD generator with mock workflow results
+        prd_result = await task_graph.prd_generator.execute({
             "workflow_results": {
                 "steps": [],
                 "workflow": "full_feature_planning"

@@ -106,51 +106,6 @@ export const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Features Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <h2 className="section-header">
-            Intelligent Agent System
-          </h2>
-          <p className="section-subtitle">
-            Powered by NVIDIA Nemotron for strategic orchestration
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + index * 0.1, duration: 0.8 }}
-                className="card card-hover card-interactive"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-14 h-14 mb-4 bg-gradient-to-br from-primary/20 to-accent/20 
-                                border border-primary/30 rounded-xl flex items-center justify-center">
-                    <Icon className="w-7 h-7 text-primary-light" />
-                  </div>
-                  <h3 className="text-lg font-display font-semibold text-gray-100 mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Agent Showcase */}
       <div className="bg-dark-lighter py-20">
         <div className="max-w-7xl mx-auto px-6">
