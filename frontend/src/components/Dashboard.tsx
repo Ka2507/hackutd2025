@@ -3,7 +3,7 @@
  */
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Layers, History, Network, TrendingUp, Rocket } from 'lucide-react';
+import { Play, Layers, History, Network, TrendingUp, Rocket, Target } from 'lucide-react';
 import { useAgents } from '@/hooks/useAgents';
 import apiClient from '../utils/apiClient';
 import AgentPanel from './AgentPanel';
@@ -14,6 +14,8 @@ import WorkflowTemplates from './WorkflowTemplates';
 import WorkflowVisualization from './WorkflowVisualization';
 import BeforeAfter from './BeforeAfter';
 import AgentChatModal from './AgentChatModal';
+import JiraIntegration from './JiraIntegration';
+import IntegrationStatus from './IntegrationStatus';
 
 export const Dashboard: React.FC = () => {
   const { agents, wsMessages, runWorkflow } = useAgents();
@@ -21,6 +23,7 @@ export const Dashboard: React.FC = () => {
   const [selectedWorkflow, setSelectedWorkflow] = useState('');
   const [demoScenarios, setDemoScenarios] = useState<any[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<{key: string, name: string, description: string} | null>(null);
+  const [showJiraIntegration, setShowJiraIntegration] = useState(false);
 
   useEffect(() => {
     // Load demo scenarios
@@ -104,7 +107,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Budget Status & System Status */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <BudgetMeter />
         <div className="card p-4">
           <div className="flex items-center justify-between">
@@ -119,10 +122,11 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="mt-3 pt-3 border-t border-dark-border">
             <p className="text-xs text-gray-400">
-              ✨ Adaptive Workflows • Risk Assessment • Smart Prioritization • Agent Collaboration
+              ✨ Adaptive Workflows • Risk Assessment • Smart Prioritization
             </p>
           </div>
         </div>
+        <IntegrationStatus />
       </div>
 
       {/* Quick Actions */}
@@ -158,6 +162,13 @@ export const Dashboard: React.FC = () => {
           >
             <Play className="w-5 h-5 mr-2" />
             Run Workflow
+          </button>
+          <button
+            onClick={() => setShowJiraIntegration(true)}
+            className="btn bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Target className="w-5 h-5 mr-2" />
+            Jira Integration
           </button>
         </div>
       </div>
@@ -296,7 +307,7 @@ export const Dashboard: React.FC = () => {
                 name: agent.name,
                 status: agent.status === 'running' ? 'working' : 
                        agent.status === 'completed' ? 'done' : 'idle',
-                quality_score: agent.quality_score,
+                quality_score: (agent as any).quality_score || 0.85,
               }))}
               contextFlow={[]}
             />
@@ -366,6 +377,12 @@ export const Dashboard: React.FC = () => {
           agentKey={selectedAgent.key}
         />
       )}
+      
+      {/* Jira Integration Modal */}
+      <JiraIntegration
+        isOpen={showJiraIntegration}
+        onClose={() => setShowJiraIntegration(false)}
+      />
     </div>
   );
 };

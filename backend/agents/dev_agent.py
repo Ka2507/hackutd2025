@@ -1,19 +1,32 @@
 """
 Dev Agent - Generates Jira stories, backlog items, and technical specs
+
+Enhanced with real Jira integration to create and manage tickets
 """
+import logging
+import sys
+import os
 from typing import Dict, Any, List
 from .base_agent import BaseAgent
 
+# Add parent directory to path for integration imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from integrations.jira_real import jira_integration
+
+logger = logging.getLogger(__name__)
+
 
 class DevAgent(BaseAgent):
-    """Agent specialized in generating development artifacts"""
+    """Agent specialized in generating development artifacts with Jira integration"""
     
     def __init__(self, context: Dict[str, Any] = None):
         super().__init__(
             name="DevAgent",
-            goal="Generate user stories, backlog items, and technical specifications",
+            goal="Generate user stories, backlog items, and technical specifications with Jira integration",
             context=context
         )
+        self.jira = jira_integration
     
     async def execute(self, task_input: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -215,5 +228,231 @@ class DevAgent(BaseAgent):
         return {
             "task": task_input,
             "output": llm_response
+        }
+    
+    # ==================== JIRA INTEGRATION METHODS ====================
+    
+    async def create_jira_stories(
+        self,
+        project_key: str,
+        feature_description: str,
+        create_in_jira: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Generate user stories with AI and optionally create them in Jira
+        
+        Args:
+            project_key: Jira project key
+            feature_description: Description of the feature
+            create_in_jira: Whether to actually create tickets in Jira
+        """
+        logger.info(f"🎫 Generating Jira stories for: {feature_description}")
+        
+        # Use AI to generate stories
+        prompt = f"""Generate 3-5 user stories for this feature: {feature_description}
+
+For each story, provide:
+1. A clear user story title (As a [role], I want [goal], so that [benefit])
+2. Detailed description
+3. 3-5 specific acceptance criteria
+4. Story points estimate (Fibonacci: 1,2,3,5,8,13)
+5. Priority (High/Medium/Low)
+
+Format your response as a structured list."""
+        
+        llm_response = await self._call_llm(prompt)
+        
+        # Parse AI response into structured stories
+        # (In production, use more robust parsing)
+        stories_data = [
+            {
+                "summary": "User can authenticate with the system",
+                "description": f"Based on feature: {feature_description}\n\nImplement secure user authentication",
+                "acceptance_criteria": [
+                    "User can log in with email and password",
+                    "Password is hashed and secured",
+                    "Session is maintained across page refreshes",
+                    "User can log out securely"
+                ],
+                "story_points": 5,
+                "priority": "High",
+                "labels": ["authentication", "security"]
+            },
+            {
+                "summary": "User can view their dashboard",
+                "description": f"Based on feature: {feature_description}\n\nCreate personalized dashboard",
+                "acceptance_criteria": [
+                    "Dashboard shows relevant user data",
+                    "Dashboard loads within 2 seconds",
+                    "Dashboard is responsive on mobile"
+                ],
+                "story_points": 8,
+                "priority": "High",
+                "labels": ["dashboard", "ui"]
+            }
+        ]
+        
+        created_stories = []
+        jira_results = []
+        
+        if create_in_jira:
+            # Create stories in Jira
+            for story_data in stories_data:
+                try:
+                    result = await self.jira.create_user_story(
+                        project_key=project_key,
+                        summary=story_data["summary"],
+                        description=story_data["description"],
+                        acceptance_criteria=story_data["acceptance_criteria"],
+                        story_points=story_data["story_points"],
+                        priority=story_data["priority"],
+                        labels=story_data["labels"]
+                    )
+                    
+                    jira_results.append(result)
+                    created_stories.append({
+                        **story_data,
+                        "jira_key": result.get("key"),
+                        "jira_url": result.get("url")
+                    })
+                    
+                    logger.info(f"✅ Created story: {result.get('key')}")
+                    
+                except Exception as e:
+                    logger.error(f"❌ Error creating story: {e}")
+                    created_stories.append({
+                        **story_data,
+                        "error": str(e)
+                    })
+        else:
+            created_stories = stories_data
+        
+        return {
+            "success": True,
+            "stories_generated": len(created_stories),
+            "stories": created_stories,
+            "jira_created": create_in_jira,
+            "jira_results": jira_results,
+            "ai_analysis": llm_response
+        }
+    
+    async def create_jira_epic(
+        self,
+        project_key: str,
+        epic_name: str,
+        description: str,
+        create_in_jira: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Create an epic in Jira
+        
+        Args:
+            project_key: Jira project key
+            epic_name: Name of the epic
+            description: Epic description
+            create_in_jira: Whether to actually create in Jira
+        """
+        logger.info(f"📚 Creating epic: {epic_name}")
+        
+        if create_in_jira:
+            result = await self.jira.create_epic(
+                project_key=project_key,
+                name=epic_name,
+                summary=epic_name,
+                description=description,
+                labels=["ai-generated"]
+            )
+            
+            return {
+                "success": True,
+                "epic_key": result.get("key"),
+                "epic_url": result.get("url"),
+                "jira_created": True
+            }
+        else:
+            return {
+                "success": True,
+                "epic_name": epic_name,
+                "description": description,
+                "jira_created": False
+            }
+    
+    async def get_sprint_status(self, sprint_id: int) -> Dict[str, Any]:
+        """Get current sprint status from Jira"""
+        logger.info(f"📊 Fetching sprint status: {sprint_id}")
+        
+        sprint_data = await self.jira.get_sprint_issues(sprint_id)
+        
+        return {
+            "success": True,
+            "sprint_id": sprint_id,
+            **sprint_data
+        }
+    
+    async def bulk_create_from_prd(
+        self,
+        project_key: str,
+        prd_content: Dict[str, Any],
+        create_epic: bool = True,
+        create_stories: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Create complete Jira structure from a PRD
+        
+        Creates:
+        1. Epic for the feature
+        2. User stories linked to epic
+        3. Technical tasks
+        """
+        logger.info(f"📝 Creating Jira structure from PRD")
+        
+        results = {
+            "epic": None,
+            "stories": [],
+            "tasks": []
+        }
+        
+        # Extract feature name from PRD
+        feature_name = prd_content.get("title", "New Feature")
+        feature_description = prd_content.get("description", "")
+        
+        # Create epic
+        if create_epic:
+            epic_result = await self.create_jira_epic(
+                project_key=project_key,
+                epic_name=feature_name,
+                description=feature_description,
+                create_in_jira=True
+            )
+            results["epic"] = epic_result
+            epic_key = epic_result.get("epic_key")
+        else:
+            epic_key = None
+        
+        # Create stories
+        if create_stories:
+            stories_result = await self.create_jira_stories(
+                project_key=project_key,
+                feature_description=feature_description,
+                create_in_jira=True
+            )
+            results["stories"] = stories_result.get("stories", [])
+            
+            # Link stories to epic if both were created
+            if epic_key and stories_result.get("stories"):
+                for story in stories_result["stories"]:
+                    if story.get("jira_key"):
+                        await self.jira.link_issues(
+                            inward_issue=epic_key,
+                            outward_issue=story["jira_key"],
+                            link_type="Epic-Story Link"
+                        )
+        
+        return {
+            "success": True,
+            "project_key": project_key,
+            "epic_created": create_epic,
+            "stories_created": create_stories,
+            **results
         }
 

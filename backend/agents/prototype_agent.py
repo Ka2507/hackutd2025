@@ -1,8 +1,20 @@
 """
 Prototype Agent - Integrates with Figma and creates design mockups
+
+Enhanced to generate visual mockups and wireframes
 """
+import logging
+import sys
+import os
 from typing import Dict, Any
 from .base_agent import BaseAgent
+
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from integrations.figma_real import figma_integration
+
+logger = logging.getLogger(__name__)
 
 
 class PrototypeAgent(BaseAgent):
@@ -14,6 +26,7 @@ class PrototypeAgent(BaseAgent):
             goal="Create design mockups and integrate with Figma",
             context=context
         )
+        self.figma = figma_integration
     
     async def execute(self, task_input: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -215,4 +228,101 @@ class PrototypeAgent(BaseAgent):
             "prototype_url": "https://figma.com/proto/general",
             "output": llm_response
         }
+    
+    async def generate_mockup_from_chat(self, feature_description: str) -> Dict[str, Any]:
+        """
+        Generate visual mockup when user asks in chat
+        
+        Args:
+            feature_description: Description of what to design
+            
+        Returns:
+            Mockup data with visual elements
+        """
+        logger.info(f"🎨 Generating mockup for: {feature_description}")
+        
+        # Use AI to generate design concept
+        prompt = f"""You are a UX/UI designer creating a mockup for: {feature_description}
+
+Provide:
+1. Screen layout description
+2. Key UI components needed
+3. Color scheme recommendations
+4. User interaction flow
+5. Design patterns to use
+
+Be specific and actionable."""
+        
+        design_concept = await self._call_llm(prompt)
+        
+        # Generate mockup structure
+        mockup = {
+            "title": f"Mockup: {feature_description[:100]}",
+            "screens": [
+                {
+                    "name": "Main Screen",
+                    "layout": "Modern dashboard layout with sidebar navigation",
+                    "components": [
+                        {"type": "header", "content": "Navigation bar with logo"},
+                        {"type": "sidebar", "content": "Main navigation menu"},
+                        {"type": "content", "content": "Primary content area"},
+                        {"type": "footer", "content": "Status and actions"}
+                    ],
+                    "wireframe_svg": self._generate_wireframe_svg(feature_description),
+                    "notes": "Clean, modern interface following Material Design principles"
+                }
+            ],
+            "design_concept": design_concept,
+            "color_palette": {
+                "primary": "#00FFFF",
+                "secondary": "#FF7A00",
+                "background": "#0F1117",
+                "surface": "#1A1D29",
+                "text": "#FFFFFF"
+            },
+            "typography": {
+                "heading": "Orbitron",
+                "body": "Inter"
+            },
+            "figma_integration": {
+                "available": self.figma.connected,
+                "status": "Can export to Figma" if self.figma.connected else "Mock mode - designs are conceptual"
+            }
+        }
+        
+        return mockup
+    
+    def _generate_wireframe_svg(self, feature: str) -> str:
+        """Generate a simple SVG wireframe representation"""
+        # Simple wireframe SVG that can be rendered in frontend
+        return f'''<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Header -->
+  <rect x="0" y="0" width="800" height="60" fill="#1A1D29" stroke="#00FFFF" stroke-width="2"/>
+  <text x="20" y="35" fill="#00FFFF" font-family="sans-serif" font-size="18" font-weight="bold">ProdigyPM</text>
+  
+  <!-- Sidebar -->
+  <rect x="0" y="60" width="200" height="540" fill="#1A1D29" stroke="#00FFFF" stroke-width="2"/>
+  <text x="20" y="100" fill="#FFFFFF" font-family="sans-serif" font-size="14">Navigation</text>
+  <rect x="20" y="120" width="160" height="40" fill="#2A2E3A" rx="4"/>
+  <rect x="20" y="170" width="160" height="40" fill="#2A2E3A" rx="4"/>
+  <rect x="20" y="220" width="160" height="40" fill="#2A2E3A" rx="4"/>
+  
+  <!-- Main Content -->
+  <rect x="200" y="60" width="600" height="540" fill="#0F1117" stroke="#00FFFF" stroke-width="2"/>
+  <text x="220" y="100" fill="#FFFFFF" font-family="sans-serif" font-size="20" font-weight="bold">{feature[:50]}</text>
+  
+  <!-- Content Cards -->
+  <rect x="220" y="120" width="560" height="120" fill="#1A1D29" stroke="#FF7A00" stroke-width="1" rx="8"/>
+  <text x="240" y="150" fill="#FFFFFF" font-family="sans-serif" font-size="16">Component Area 1</text>
+  
+  <rect x="220" y="260" width="270" height="150" fill="#1A1D29" stroke="#FF7A00" stroke-width="1" rx="8"/>
+  <text x="240" y="290" fill="#FFFFFF" font-family="sans-serif" font-size="14">Feature Block 1</text>
+  
+  <rect x="510" y="260" width="270" height="150" fill="#1A1D29" stroke="#FF7A00" stroke-width="1" rx="8"/>
+  <text x="530" y="290" fill="#FFFFFF" font-family="sans-serif" font-size="14">Feature Block 2</text>
+  
+  <!-- Footer -->
+  <rect x="220" y="430" width="560" height="50" fill="#1A1D29" stroke="#00FFFF" stroke-width="1" rx="4"/>
+  <text x="240" y="460" fill="#00FFFF" font-family="sans-serif" font-size="12">Actions & Status</text>
+</svg>'''
 
