@@ -3,12 +3,15 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { X, Send, ArrowLeft, Loader2, Sparkles, ChevronDown, ChevronUp, Brain } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import apiClient from '../utils/apiClient';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  thinking?: string;
   timestamp: Date;
   cost?: number;
   model?: string;
@@ -34,6 +37,7 @@ export const AgentChatModal: React.FC<AgentChatModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [totalCost, setTotalCost] = useState(0);
+  const [expandedThinking, setExpandedThinking] = useState<Set<number>>(new Set());
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -84,11 +88,20 @@ export const AgentChatModal: React.FC<AgentChatModalProps> = ({
 
       // Parse the nested response structure
       const resultData = response.result?.result || {};
-      const aiResponse = resultData.response || 'I apologize, but I encountered an issue processing your request.';
+      let aiResponse = resultData.response || 'I apologize, but I encountered an issue processing your request.';
+      
+      // Extract thinking sections
+      let thinking: string | undefined;
+      const thinkMatch = aiResponse.match(/<think>([\s\S]*?)<\/think>/);
+      if (thinkMatch) {
+        thinking = thinkMatch[1].trim();
+        aiResponse = aiResponse.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+      }
       
       const assistantMessage: Message = {
         role: 'assistant',
         content: aiResponse,
+        thinking,
         timestamp: new Date(),
         cost: resultData.cost,
         model: resultData.model
@@ -132,6 +145,16 @@ export const AgentChatModal: React.FC<AgentChatModalProps> = ({
       'prioritization': 'text-cyan-400',
     };
     return colorMap[agentKey] || 'text-neon-cyan';
+  };
+
+  const toggleThinking = (index: number) => {
+    const newExpanded = new Set(expandedThinking);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedThinking(newExpanded);
   };
 
   if (!isOpen) return null;
@@ -221,9 +244,56 @@ export const AgentChatModal: React.FC<AgentChatModalProps> = ({
                       </span>
                     )}
                   </div>
-                  <p className="text-gray-200 whitespace-pre-wrap text-sm leading-relaxed">
-                    {message.content}
-                  </p>
+                  
+                  {/* Thinking Section - Collapsible like ChatGPT */}
+                  {message.thinking && (
+                    <div className="mb-3">
+                      <button
+                        onClick={() => toggleThinking(index)}
+                        className="flex items-center gap-2 text-xs text-gray-400 hover:text-gray-300 transition-colors mb-2"
+                      >
+                        <Brain className="w-3 h-3" />
+                        <span>Thinking</span>
+                        {expandedThinking.has(index) ? (
+                          <ChevronUp className="w-3 h-3" />
+                        ) : (
+                          <ChevronDown className="w-3 h-3" />
+                        )}
+                      </button>
+                      {expandedThinking.has(index) && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="bg-dark-bg/50 border border-dark-border rounded-lg p-3 text-xs text-gray-400 italic"
+                        >
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.thinking}
+                          </ReactMarkdown>
+                        </motion.div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Message Content with Markdown */}
+                  <div className="prose prose-invert prose-sm max-w-none">
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({node, ...props}) => <p className="text-gray-200 mb-2" {...props} />,
+                        ul: ({node, ...props}) => <ul className="text-gray-200 list-disc list-inside mb-2" {...props} />,
+                        ol: ({node, ...props}) => <ol className="text-gray-200 list-decimal list-inside mb-2" {...props} />,
+                        li: ({node, ...props}) => <li className="text-gray-200 mb-1" {...props} />,
+                        h1: ({node, ...props}) => <h1 className="text-white font-bold text-lg mb-2" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-white font-bold text-base mb-2" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-white font-semibold text-sm mb-2" {...props} />,
+                        strong: ({node, ...props}) => <strong className="text-white font-bold" {...props} />,
+                        code: ({node, ...props}) => <code className="bg-dark-bg px-1 py-0.5 rounded text-neon-cyan text-xs" {...props} />,
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
                   {message.cost !== undefined && message.cost > 0 && (
                     <div className="mt-2 text-xs text-gray-500">
                       Cost: ${message.cost.toFixed(4)}

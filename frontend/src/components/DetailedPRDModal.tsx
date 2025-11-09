@@ -3,7 +3,9 @@
  */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronRight, ChevronLeft, Check, Loader2, ArrowLeft } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, Loader2, ArrowLeft, Brain, Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import apiClient from '../utils/apiClient';
 
 interface DetailedPRDModalProps {
@@ -17,64 +19,73 @@ const AGENT_STEPS = [
     key: 'strategy',
     name: 'Strategy',
     title: 'Strategic Planning',
-    prompt: 'Describe your product idea and target market',
+    prompt: 'Tell me about your product idea',
+    aiPrompt: 'Based on this product idea, provide strategic analysis including: market opportunity, competitive landscape, positioning strategy, and key success metrics.',
     placeholder: 'e.g., AI-powered analytics dashboard for B2B SaaS companies...',
   },
   {
     key: 'research',
     name: 'Research',
     title: 'User Research',
-    prompt: 'Who are your target users and what problems do they face?',
-    placeholder: 'e.g., Product managers at mid-size tech companies struggling with...',
+    prompt: 'Who are your target users?',
+    aiPrompt: 'Analyze the target users and provide: user personas, pain points, user needs analysis, and market validation insights.',
+    placeholder: 'e.g., Product managers at mid-size tech companies...',
   },
   {
-    key: 'risk',
+    key: 'risk_assessment',
     name: 'Risk Assessment',
     title: 'Risk Analysis',
-    prompt: 'What are the potential risks and challenges?',
-    placeholder: 'e.g., Technical complexity, market competition, timeline constraints...',
+    prompt: 'What challenges do you anticipate?',
+    aiPrompt: 'Assess potential risks including: technical risks, market risks, timeline risks, resource constraints, and mitigation strategies for each.',
+    placeholder: 'e.g., Technical complexity, market competition...',
   },
   {
     key: 'dev',
     name: 'Development',
     title: 'Technical Requirements',
-    prompt: 'Describe key features and technical requirements',
-    placeholder: 'e.g., Real-time data visualization, API integrations, authentication...',
+    prompt: 'What are the key features and capabilities needed?',
+    aiPrompt: 'Generate technical specifications including: user stories, acceptance criteria, technical architecture, API requirements, and sprint planning.',
+    placeholder: 'e.g., Real-time data visualization, API integrations...',
   },
   {
     key: 'prioritization',
     name: 'Prioritization',
     title: 'Feature Prioritization',
-    prompt: 'What features are must-haves vs nice-to-haves?',
-    placeholder: 'e.g., MVP features: dashboard, analytics. Phase 2: integrations, AI...',
+    prompt: 'Which features are most important?',
+    aiPrompt: 'Prioritize features using RICE framework (Reach, Impact, Confidence, Effort) and provide: MVP scope, roadmap phases, and feature rankings.',
+    placeholder: 'e.g., MVP features: dashboard, analytics. Phase 2: AI...',
   },
   {
     key: 'prototype',
     name: 'Design',
     title: 'Design & UX',
-    prompt: 'Describe your design vision and user experience goals',
-    placeholder: 'e.g., Clean, modern interface with data visualizations and...',
+    prompt: 'Describe your design vision',
+    aiPrompt: 'Define design requirements including: UI/UX specifications, wireframe concepts, design system elements, and user flow recommendations.',
+    placeholder: 'e.g., Clean, modern interface with data visualizations...',
   },
   {
     key: 'gtm',
     name: 'Go-to-Market',
     title: 'Launch Strategy',
-    prompt: 'How will you launch and position this product?',
-    placeholder: 'e.g., Target early adopters in PM community, LinkedIn campaigns...',
+    prompt: 'How do you plan to launch?',
+    aiPrompt: 'Create go-to-market strategy including: launch plan, pricing strategy, marketing channels, positioning, and success metrics.',
+    placeholder: 'e.g., Target early adopters, LinkedIn campaigns...',
   },
   {
     key: 'automation',
     name: 'Automation',
     title: 'Workflow Automation',
-    prompt: 'What workflows should be automated?',
-    placeholder: 'e.g., Daily reports, sprint planning, user feedback analysis...',
+    prompt: 'What processes should be automated?',
+    aiPrompt: 'Identify automation opportunities including: workflow automation, reporting automation, integration points, and efficiency gains.',
+    placeholder: 'e.g., Daily reports, sprint planning...',
   },
   {
     key: 'regulation',
     name: 'Compliance',
     title: 'Compliance & Regulations',
-    prompt: 'What compliance or regulatory requirements apply?',
-    placeholder: 'e.g., GDPR for EU users, SOC 2 for enterprise, data privacy...',
+    prompt: 'What compliance requirements apply?',
+    aiPrompt: 'Review compliance needs including: regulatory requirements (GDPR, SOC2, etc), security standards, privacy considerations, and compliance roadmap.',
+    placeholder: 'e.g., GDPR for EU users, SOC 2 for enterprise...',
   },
 ];
 
@@ -84,53 +95,96 @@ export const DetailedPRDModal: React.FC<DetailedPRDModalProps> = ({
   onComplete,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [responses, setResponses] = useState<Record<string, string>>({});
+  const [userInputs, setUserInputs] = useState<Record<string, string>>({});
+  const [agentResponses, setAgentResponses] = useState<Record<string, string>>({});
   const [currentInput, setCurrentInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isProcessingAgent, setIsProcessingAgent] = useState(false);
 
   const currentAgent = AGENT_STEPS[currentStep];
   const progress = ((currentStep + 1) / AGENT_STEPS.length) * 100;
 
-  const handleNext = () => {
-    if (currentInput.trim()) {
-      setResponses({ ...responses, [currentAgent.key]: currentInput });
+  const handleNext = async () => {
+    if (!currentInput.trim()) return;
+    
+    setIsProcessingAgent(true);
+    
+    try {
+      // Store user's input
+      const newUserInputs = { ...userInputs, [currentAgent.key]: currentInput };
+      setUserInputs(newUserInputs);
+      
+      // Build context from all previous interactions
+      const contextMessages = Object.entries(newUserInputs).map(([key, value]) => {
+        const step = AGENT_STEPS.find(s => s.key === key);
+        return `${step?.title || key}: ${value}`;
+      }).join('\n\n');
+      
+      // Call the agent with full context
+      const fullPrompt = `${currentAgent.aiPrompt}\n\nProduct Context:\n${contextMessages}`;
+      
+      const response = await apiClient.executeAgent(
+        currentAgent.key,
+        'chat',
+        {
+          message: fullPrompt,
+          conversation_history: []
+        }
+      );
+      
+      // Extract agent's response
+      const resultData = response.result?.result || {};
+      let aiResponse = resultData.response || 'Analysis complete.';
+      
+      // Remove thinking tags from displayed response
+      aiResponse = aiResponse.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+      
+      // Store agent's response
+      setAgentResponses({ ...agentResponses, [currentAgent.key]: aiResponse });
       setCurrentInput('');
       
+      // Move to next step or generate PRD
       if (currentStep < AGENT_STEPS.length - 1) {
         setCurrentStep(currentStep + 1);
       } else {
-        handleGeneratePRD();
+        await handleGeneratePRD(newUserInputs, { ...agentResponses, [currentAgent.key]: aiResponse });
       }
+    } catch (error) {
+      console.error('Error processing agent:', error);
+      alert('Failed to process with agent. Please try again.');
+    } finally {
+      setIsProcessingAgent(false);
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
       const prevAgent = AGENT_STEPS[currentStep - 1];
-      setCurrentInput(responses[prevAgent.key] || '');
+      setCurrentInput(userInputs[prevAgent.key] || '');
       setCurrentStep(currentStep - 1);
     }
   };
 
-  const handleGeneratePRD = async () => {
+  const handleGeneratePRD = async (inputs: Record<string, string>, responses: Record<string, string>) => {
     setIsGenerating(true);
     try {
-      // Run full feature planning workflow with all context
-      const workflowResult = await apiClient.runTask(
-        'full_feature_planning',
-        {
-          ...responses,
-          feature: responses.strategy || 'New Product',
-          market: responses.research || 'Target Market',
-        },
-        undefined,
-        true
-      );
-
-      // Generate PRD
-      const prdResult = await apiClient.generatePRD(workflowResult.workflow_id);
+      // Compile all agent analyses into a comprehensive PRD
+      const prdSections = AGENT_STEPS.map(agent => ({
+        title: agent.title,
+        userInput: inputs[agent.key] || '',
+        agentAnalysis: responses[agent.key] || ''
+      }));
       
-      onComplete(prdResult.prd);
+      const compiledPRD = {
+        title: inputs.strategy ? `PRD: ${inputs.strategy.split('\n')[0].substring(0, 100)}` : 'Product Requirements Document',
+        generatedAt: new Date().toISOString(),
+        sections: prdSections,
+        fullContent: prdSections.map(section => 
+          `## ${section.title}\n\n### Your Input:\n${section.userInput}\n\n### Analysis:\n${section.agentAnalysis}`
+        ).join('\n\n---\n\n')
+      };
+      
+      onComplete(compiledPRD);
       handleReset();
       onClose();
     } catch (error) {
@@ -143,9 +197,11 @@ export const DetailedPRDModal: React.FC<DetailedPRDModalProps> = ({
 
   const handleReset = () => {
     setCurrentStep(0);
-    setResponses({});
+    setUserInputs({});
+    setAgentResponses({});
     setCurrentInput('');
     setIsGenerating(false);
+    setIsProcessingAgent(false);
   };
 
   const handleSkip = () => {
@@ -221,6 +277,23 @@ export const DetailedPRDModal: React.FC<DetailedPRDModalProps> = ({
           <div className="p-6">
             {!isGenerating ? (
               <>
+                {/* Show previous agent's response if available */}
+                {currentStep > 0 && agentResponses[AGENT_STEPS[currentStep - 1].key] && (
+                  <div className="mb-6 p-4 bg-dark-lighter border border-dark-border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="w-4 h-4 text-neon-cyan" />
+                      <span className="text-sm font-semibold text-neon-cyan">
+                        {AGENT_STEPS[currentStep - 1].name} Agent Analysis
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-300 max-h-40 overflow-y-auto prose prose-invert prose-sm">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {agentResponses[AGENT_STEPS[currentStep - 1].key].substring(0, 500) + '...'}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                )}
+                
                 <label className="block text-sm font-medium text-gray-300 mb-3">
                   {currentAgent.prompt}
                 </label>
@@ -230,13 +303,22 @@ export const DetailedPRDModal: React.FC<DetailedPRDModalProps> = ({
                   placeholder={currentAgent.placeholder}
                   className="w-full h-40 px-4 py-3 bg-dark-lighter border border-dark-border rounded-lg text-white placeholder-gray-500 focus:border-neon-cyan focus:outline-none resize-none"
                   autoFocus
+                  disabled={isProcessingAgent}
                 />
+                
+                {/* Loading state while processing agent */}
+                {isProcessingAgent && (
+                  <div className="mt-4 flex items-center gap-2 text-neon-cyan">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">{currentAgent.name} Agent is analyzing...</span>
+                  </div>
+                )}
                 
                 {/* Navigation */}
                 <div className="flex items-center justify-between mt-6">
                   <button
                     onClick={handleBack}
-                    disabled={currentStep === 0}
+                    disabled={currentStep === 0 || isProcessingAgent}
                     className="flex items-center gap-2 px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -246,16 +328,22 @@ export const DetailedPRDModal: React.FC<DetailedPRDModalProps> = ({
                   <div className="flex items-center gap-3">
                     <button
                       onClick={handleSkip}
-                      className="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm"
+                      disabled={isProcessingAgent}
+                      className="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm disabled:opacity-30"
                     >
                       Skip
                     </button>
                     <button
                       onClick={handleNext}
-                      disabled={!currentInput.trim()}
+                      disabled={!currentInput.trim() || isProcessingAgent}
                       className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {currentStep === AGENT_STEPS.length - 1 ? (
+                      {isProcessingAgent ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : currentStep === AGENT_STEPS.length - 1 ? (
                         <>
                           <Check className="w-4 h-4" />
                           Generate PRD
@@ -274,21 +362,18 @@ export const DetailedPRDModal: React.FC<DetailedPRDModalProps> = ({
               <div className="text-center py-12">
                 <Loader2 className="w-12 h-12 text-neon-cyan mx-auto mb-4 animate-spin" />
                 <h3 className="text-xl font-bold text-white mb-2">
-                  Generating Your Detailed PRD
+                  Compiling Your Comprehensive PRD
                 </h3>
                 <p className="text-gray-400">
-                  Our 9 AI agents are working together to create your comprehensive PRD...
+                  Combining insights from all 9 specialized AI agents...
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-2">
-                  {AGENT_STEPS.map((agent, idx) => (
+                  {AGENT_STEPS.map((agent) => (
                     <span
                       key={agent.key}
-                      className={`text-xs px-2 py-1 rounded ${
-                        idx <= currentStep
-                          ? 'bg-neon-cyan/20 text-neon-cyan'
-                          : 'bg-dark-lighter text-gray-500'
-                      }`}
+                      className="text-xs px-2 py-1 rounded bg-neon-cyan/20 text-neon-cyan flex items-center gap-1"
                     >
+                      <Check className="w-3 h-3" />
                       {agent.name}
                     </span>
                   ))}
