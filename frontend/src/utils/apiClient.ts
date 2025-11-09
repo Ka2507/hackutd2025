@@ -1,5 +1,5 @@
 /**
- * API Client for ProdigyPM Backend
+ * API Client for ProdPlex Backend
  * Handles all HTTP requests and WebSocket connections
  */
 import axios, { AxiosInstance } from 'axios';

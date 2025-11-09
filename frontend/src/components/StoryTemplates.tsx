@@ -1,7 +1,7 @@
 /**
  * Story Templates Component
  * 
- * Demonstrates ProdigyPM's compatibility with PNC workshop format
+ * Demonstrates ProdPlex's compatibility with PNC workshop format
  * Shows how our 9-agent system produces superior results
  */
 import { useState, useEffect } from 'react';
@@ -77,7 +77,7 @@ export const StoryTemplates: React.FC = () => {
         body: JSON.stringify({
           stories: pncDemoStories,
           format: format,
-          title: "ProdigyPM AI-Generated User Stories (PNC Compatible)"
+          title: "ProdPlex AI-Generated User Stories (PNC Compatible)"
         })
       });
       

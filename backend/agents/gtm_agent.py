@@ -28,7 +28,7 @@ class GtmAgent(BaseAgent):
         self.update_status("running")
         
         task_type = task_input.get("task_type", "launch_plan")
-        product = task_input.get("product", "ProdigyPM")
+        product = task_input.get("product", "ProdPlex")
         target_audience = task_input.get("target_audience", "Product Managers")
         
         try:
@@ -259,7 +259,7 @@ class GtmAgent(BaseAgent):
             "core_messages": {
                 "headline": "Your AI Co-Pilot for Product Management",
                 "tagline": "Plan. Research. Execute. Automate.",
-                "elevator_pitch": "ProdigyPM uses multi-agent AI to help Product Managers save 10+ hours per week on planning, research, and workflow automation."
+                "elevator_pitch": "ProdPlex uses multi-agent AI to help Product Managers save 10+ hours per week on planning, research, and workflow automation."
             },
             "benefits_hierarchy": [
                 "Time savings (quantified)",

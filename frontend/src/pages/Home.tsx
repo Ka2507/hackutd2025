@@ -61,7 +61,7 @@ export const Home: React.FC = () => {
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
               <Sparkles className="w-6 h-6 text-white" />
-              <span className="text-xl font-display font-bold gradient-text">ProdigyPM</span>
+              <span className="text-xl font-display font-bold gradient-text">ProdPlex</span>
             </button>
             
             <button
@@ -104,7 +104,7 @@ export const Home: React.FC = () => {
             </div>
             
             <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight">
-              <span className="gradient-text">ProdigyPM</span>
+              <span className="gradient-text">ProdPlex</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-silver mb-4 font-medium">

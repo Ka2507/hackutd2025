@@ -32,7 +32,7 @@ const AGENT_STEPS = [
     placeholder: 'e.g., Product managers at mid-size tech companies...',
   },
   {
-    key: 'risk_assessment',
+    key: 'risk',
     name: 'Risk Assessment',
     title: 'Risk Analysis',
     prompt: 'What challenges do you anticipate?',

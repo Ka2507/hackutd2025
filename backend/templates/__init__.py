@@ -1,4 +1,4 @@
-"""Story Templates module for ProdigyPM - PNC Workshop Compatible"""
+"""Story Templates module for ProdPlex - PNC Workshop Compatible"""
 
 from .story_templates import (
     get_template,

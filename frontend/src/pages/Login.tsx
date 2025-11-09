@@ -74,7 +74,7 @@ export const Login: React.FC = () => {
           {/* Logo/Title */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-display font-bold gradient-text mb-2">
-              ProdigyPM
+              ProdPlex
             </h1>
             <p className="text-silver/70">
               AI Co-Pilot for Product Managers
@@ -237,7 +237,7 @@ export const Login: React.FC = () => {
         {/* Footer */}
         <div className="mt-6 text-center">
           <p className="text-sm text-silver/50">
-            ProdigyPM v1.0.0
+            ProdPlex v1.0.0
           </p>
         </div>
       </motion.div>

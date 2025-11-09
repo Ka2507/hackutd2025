@@ -1,5 +1,5 @@
 """
-ProdigyPM FastAPI Backend
+ProdPlex FastAPI Backend
 Main application with REST API and WebSocket support
 """
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
@@ -932,7 +932,7 @@ async def get_pnc_demo_stories():
             "success": True,
             "stories": stories,
             "count": len(stories),
-            "generated_by": "ProdigyPM 9-Agent System",
+            "generated_by": "ProdPlex 9-Agent System",
             "advantage": "Multi-agent review vs single LLM generation",
             "pnc_compatible": True
         }
@@ -1099,7 +1099,7 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.send_json({
             "type": "connected",
             "data": {
-                "message": "Connected to ProdigyPM agent updates",
+                "message": "Connected to ProdPlex agent updates",
                 "timestamp": datetime.now().isoformat(),
                 "agents": task_graph.get_agent_status()
             }
@@ -1309,7 +1309,7 @@ async def generate_prd(workflow_id: Optional[str] = None, project_id: Optional[i
                     "content": steps[8].get("output", {}).get("data", {}) if len(steps) > 8 else {"note": "Compliance review pending"}
                 }
             },
-            "generated_by": "ProdigyPM Multi-Agent System",
+            "generated_by": "ProdPlex Multi-Agent System",
             "agents_used": list(task_graph.agents.keys()),
             "workflow_completed": len(steps) > 0
         }

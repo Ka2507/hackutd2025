@@ -493,7 +493,7 @@ Then provide a narrative description of the design concept."""
             # Settings/Admin - Neutral gray/blue
             ('settings', 'admin', 'config', 'preferences', 'account'): ("#6B7280", "#3B82F6"),
             
-            # Default - Original ProdigyPM colors
+            # Default - Original ProdPlex colors
             ('default',): ("#00FFFF", "#FF7A00")
         }
         

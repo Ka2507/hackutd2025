@@ -123,20 +123,40 @@ export const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
   onNodeClick,
 }) => {
   const { nodes, edges } = useMemo(() => {
-    // Calculate positions in a grid layout
-    const cols = Math.ceil(Math.sqrt(agents.length));
-    const spacing = 250;
+    // Define the standard workflow order
+    const workflowOrder = [
+      'Strategy',
+      'Research', 
+      'Risk',
+      'Development',
+      'Prioritization',
+      'Prototype',
+      'GTM',
+      'Automation',
+      'Regulation'
+    ];
     
-    const nodes: Node[] = agents.map((agent, index) => {
-      const row = Math.floor(index / cols);
-      const col = index % cols;
+    // Sort agents by workflow order
+    const sortedAgents = [...agents].sort((a, b) => {
+      const indexA = workflowOrder.findIndex(name => a.name.toLowerCase().includes(name.toLowerCase()));
+      const indexB = workflowOrder.findIndex(name => b.name.toLowerCase().includes(name.toLowerCase()));
+      return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+    });
+    
+    // Create circular/flow layout
+    const centerX = 400;
+    const centerY = 300;
+    const radius = 200;
+    
+    const nodes: Node[] = sortedAgents.map((agent, index) => {
+      const angle = (index / sortedAgents.length) * 2 * Math.PI - Math.PI / 2;
       
       return {
         id: agent.name,
         type: 'agent',
         position: {
-          x: col * spacing,
-          y: row * spacing,
+          x: centerX + radius * Math.cos(angle),
+          y: centerY + radius * Math.sin(angle),
         },
         data: {
           agent,
@@ -145,18 +165,40 @@ export const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
       };
     });
     
-    const edges: Edge[] = contextFlow.map((flow, index) => ({
+    // Create edges showing workflow progression
+    const workflowEdges: Edge[] = sortedAgents.slice(0, -1).map((agent, index) => ({
+      id: `workflow-${index}`,
+      source: agent.name,
+      target: sortedAgents[index + 1].name,
+      animated: true,
+      type: 'smoothstep',
+      style: {
+        stroke: '#a855f7',
+        strokeWidth: 2,
+      },
+      markerEnd: {
+        type: 'arrowclosed',
+        color: '#a855f7',
+        width: 20,
+        height: 20,
+      },
+    }));
+    
+    // Add context flow edges if provided
+    const contextEdges: Edge[] = contextFlow.map((flow, index) => ({
       id: `edge-${flow.from}-${flow.to}-${index}`,
       source: flow.from,
       target: flow.to,
       animated: true,
+      type: 'bezier',
       style: {
-        stroke: '#ffffff',
-        strokeWidth: 2,
+        stroke: '#60a5fa',
+        strokeWidth: 1.5,
+        strokeDasharray: '5,5',
       },
       label: flow.data_type,
       labelStyle: {
-        fill: '#ffffff',
+        fill: '#60a5fa',
         fontSize: 10,
         fontWeight: 500,
       },
@@ -166,7 +208,7 @@ export const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
       },
     }));
     
-    return { nodes, edges };
+    return { nodes, edges: [...workflowEdges, ...contextEdges] };
   }, [agents, contextFlow, onNodeClick]);
   
   return (

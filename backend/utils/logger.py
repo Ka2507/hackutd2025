@@ -1,5 +1,5 @@
 """
-Logging configuration for ProdigyPM.
+Logging configuration for ProdPlex.
 
 Sets up structured logging with both file and console handlers.
 """

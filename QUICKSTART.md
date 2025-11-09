@@ -1,11 +1,11 @@
-# ProdigyPM Quick Start Guide
+# ProdPlex Quick Start Guide
 
-Get ProdigyPM up and running in 5 minutes!
+Get ProdPlex up and running in 5 minutes!
 
 ## Option 1: Automated Setup (Recommended)
 
 ```bash
-cd ProdigyPM
+cd ProdPlex
 ./setup.sh
 ```
 

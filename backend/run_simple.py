@@ -13,7 +13,7 @@ required_dirs = [
     "utils"
 ]
 
-print("Checking ProdigyPM backend structure...")
+print("Checking ProdPlex backend structure...")
 print("-" * 50)
 
 all_good = True

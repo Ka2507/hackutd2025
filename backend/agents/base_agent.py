@@ -1,5 +1,5 @@
 """
-Base Agent class for ProdigyPM
+Base Agent class for ProdPlex
 All specialized agents inherit from this class
 """
 from abc import ABC, abstractmethod
@@ -13,7 +13,7 @@ from orchestrator.nemotron_bridge import nemotron_bridge
 
 
 class BaseAgent(ABC):
-    """Base class for all AI agents in ProdigyPM"""
+    """Base class for all AI agents in ProdPlex"""
     
     def __init__(self, name: str, goal: str, context: Optional[Dict[str, Any]] = None):
         """

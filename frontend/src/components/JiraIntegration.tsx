@@ -7,7 +7,7 @@
  * - Bulk create from PRD
  * - Manage tickets
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
@@ -65,8 +65,16 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClos
   const [pncDemoStories, setPncDemoStories] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   
+  // Auto-load templates when modal opens
+  useEffect(() => {
+    if (isOpen && templates.length === 0 && !loadingTemplates) {
+      loadTemplatesData();
+    }
+  }, [isOpen]);
+  
   // Load templates when Templates tab is opened
   const loadTemplatesData = async () => {
+    console.log('🔄 Loading templates...');
     setLoadingTemplates(true);
     try {
       const [templatesRes, demoRes] = await Promise.all([
@@ -74,15 +82,27 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClos
         fetch('http://localhost:8000/api/v1/demo/pnc_stories')
       ]);
       
+      console.log('✅ Fetched data, parsing...');
       const templatesData = await templatesRes.json();
       const demoData = await demoRes.json();
       
-      if (templatesData.success) setTemplates(templatesData.templates || []);
-      if (demoData.success) setPncDemoStories(demoData.stories || []);
+      console.log('Templates data:', templatesData);
+      console.log('Demo data:', demoData);
+      
+      if (templatesData.success) {
+        setTemplates(templatesData.templates || []);
+        console.log(`✅ Set ${templatesData.templates?.length || 0} templates`);
+      }
+      if (demoData.success) {
+        setPncDemoStories(demoData.stories || []);
+        console.log(`✅ Set ${demoData.stories?.length || 0} demo stories`);
+      }
     } catch (error) {
-      console.error('Error loading templates:', error);
+      console.error('❌ Error loading templates:', error);
+      alert(`Failed to load templates: ${error}`);
     } finally {
       setLoadingTemplates(false);
+      console.log('✅ Loading complete');
     }
   };
   
@@ -189,7 +209,7 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClos
         estimate: `${story.story_points}sp`,
         tags: story.labels || [],
         epic: '',
-        author: 'ProdigyPM AI - 9 Agent System',
+        author: 'ProdPlex AI - 9 Agent System',
         status: 'Draft',
         jira_key: story.jira_key || ''
       }));
@@ -665,10 +685,26 @@ export const JiraIntegration: React.FC<JiraIntegrationProps> = ({ isOpen, onClos
                   </p>
                 </div>
                 
-                {loadingTemplates ? (
+                {loadingTemplates && templates.length === 0 && pncDemoStories.length === 0 ? (
                   <div className="text-center py-12">
                     <Loader2 className="w-12 h-12 text-blue-400 mx-auto mb-4 animate-spin" />
                     <p className="text-gray-400">Loading templates...</p>
+                    <button
+                      onClick={loadTemplatesData}
+                      className="mt-4 text-sm text-blue-400 hover:underline"
+                    >
+                      Click here if stuck
+                    </button>
+                  </div>
+                ) : templates.length === 0 && pncDemoStories.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-gray-400 mb-4">No templates loaded</p>
+                    <button
+                      onClick={loadTemplatesData}
+                      className="btn btn-primary"
+                    >
+                      Load Templates
+                    </button>
                   </div>
                 ) : (
                   <>

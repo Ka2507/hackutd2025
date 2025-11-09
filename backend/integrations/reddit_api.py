@@ -116,7 +116,7 @@ class RedditAPI:
             },
             {
                 "id": "c3",
-                "body": "Anyone tried ProdigyPM? Saw it mentioned on Product Hunt.",
+                "body": "Anyone tried ProdPlex? Saw it mentioned on Product Hunt.",
                 "score": 12,
                 "author": "commenter4",
                 "created_utc": 1699373600,

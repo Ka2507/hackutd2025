@@ -65,7 +65,7 @@ class AutomationAgent(BaseAgent):
             "sprint_id": sprint_id,
             "start_date": "2025-10-28",
             "end_date": "2025-11-08",
-            "team": "ProdigyPM Core Team",
+            "team": "ProdPlex Core Team",
             "capacity": 40,
             "completed_points": 35,
             "incomplete_points": 5

@@ -1,5 +1,5 @@
 """
-Configuration management for ProdigyPM backend.
+Configuration management for ProdPlex backend.
 
 Handles environment variables and settings using Pydantic.
 """
@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
     # App Settings
-    app_name: str = "ProdigyPM"
+    app_name: str = "ProdPlex"
     app_version: str = "1.0.0"
     debug: bool = True
     

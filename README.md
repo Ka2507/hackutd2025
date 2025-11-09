@@ -1,10 +1,10 @@
-# ProdigyPM
+# ProdPlex
 
 **Your AI Co-Pilot for Product Management**
 
-ProdigyPM is an Agentic AI platform that helps Product Managers plan, ideate, research, and automate workflows using multi-agent AI orchestration powered by NVIDIA Nemotron and local LLMs.
+ProdPlex is an Agentic AI platform that helps Product Managers plan, ideate, research, and automate workflows using multi-agent AI orchestration powered by NVIDIA Nemotron and local LLMs.
 
-![ProdigyPM](https://img.shields.io/badge/Version-1.0.0-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green) ![React](https://img.shields.io/badge/React-18.2-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)
+![ProdPlex](https://img.shields.io/badge/Version-1.0.0-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green) ![React](https://img.shields.io/badge/React-18.2-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)
 
 ---
 
@@ -41,7 +41,7 @@ ProdigyPM is an Agentic AI platform that helps Product Managers plan, ideate, re
 ## Architecture
 
 ```
-ProdigyPM/
+ProdPlex/
 ├── backend/                   # FastAPI Backend
 │   ├── agents/               # 7 AI Agents
 │   │   ├── base_agent.py
@@ -100,8 +100,8 @@ ProdigyPM/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/ProdigyPM.git
-cd ProdigyPM
+git clone https://github.com/yourusername/ProdPlex.git
+cd ProdPlex
 ```
 
 ### 2. Backend Setup
@@ -145,7 +145,7 @@ Frontend will start on `http://localhost:5173`
 
 ### 4. Open Your Browser
 
-Navigate to `http://localhost:5173` to see ProdigyPM in action!
+Navigate to `http://localhost:5173` to see ProdPlex in action!
 
 ---
 
@@ -348,7 +348,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Contact
 
 - **Email**: contact@prodigypm.ai
-- **Twitter**: @ProdigyPM
+- **Twitter**: @ProdPlex
 - **Discord**: [Join our community](https://discord.gg/prodigypm)
 
 ---
@@ -367,6 +367,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-**Built with care by the ProdigyPM Team**
+**Built with care by the ProdPlex Team**
 
 **#AIforPMs #ProductManagement #NVIDIA #PNC #Hackathon2025**

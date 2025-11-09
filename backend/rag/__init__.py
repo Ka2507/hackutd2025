@@ -1,4 +1,4 @@
-"""RAG (Retrieval-Augmented Generation) module for ProdigyPM."""
+"""RAG (Retrieval-Augmented Generation) module for ProdPlex."""
 
 from .pinecone_rag import pinecone_rag
 

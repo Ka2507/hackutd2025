@@ -26,13 +26,13 @@ class FigmaAPI:
         
         # Mock file data
         return {
-            "name": "ProdigyPM Design System",
+            "name": "ProdPlex Design System",
             "lastModified": "2025-11-08T12:00:00Z",
             "thumbnailUrl": f"https://figma.com/thumb/{file_key}",
             "version": "1.0.0",
             "document": {
                 "id": file_key,
-                "name": "ProdigyPM",
+                "name": "ProdPlex",
                 "type": "DOCUMENT",
                 "children": [
                     {
@@ -147,7 +147,7 @@ class FigmaAPI:
         return [
             {
                 "id": "1",
-                "name": "ProdigyPM MVP",
+                "name": "ProdPlex MVP",
                 "files": [
                     {
                         "key": "abc123",

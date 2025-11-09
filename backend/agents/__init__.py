@@ -1,4 +1,4 @@
-"""Agents module - All AI agents for ProdigyPM"""
+"""Agents module - All AI agents for ProdPlex"""
 from .base_agent import BaseAgent
 from .strategy_agent import StrategyAgent
 from .research_agent import ResearchAgent

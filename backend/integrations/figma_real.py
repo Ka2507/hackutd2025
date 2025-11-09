@@ -120,12 +120,12 @@ class FigmaIntegration:
     def _mock_file_data(self, file_key: str) -> Dict[str, Any]:
         """Generate mock file data"""
         return {
-            "name": "ProdigyPM Designs",
+            "name": "ProdPlex Designs",
             "lastModified": "2025-11-08T12:00:00Z",
             "thumbnailUrl": f"https://figma.com/thumb/{file_key}",
             "document": {
                 "id": file_key,
-                "name": "ProdigyPM",
+                "name": "ProdPlex",
                 "children": [
                     {"id": "1:1", "name": "Dashboard", "type": "FRAME"},
                     {"id": "1:2", "name": "Components", "type": "FRAME"}

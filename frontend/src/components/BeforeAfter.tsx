@@ -64,7 +64,7 @@ export const BeforeAfter: React.FC<BeforeAfterProps> = ({
           </div>
         </motion.div>
         
-        {/* After - With ProdigyPM */}
+        {/* After - With ProdPlex */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -72,7 +72,7 @@ export const BeforeAfter: React.FC<BeforeAfterProps> = ({
         >
           <div className="flex items-center gap-2 mb-3">
             <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-            <h4 className="text-sm font-semibold text-silver">With ProdigyPM</h4>
+            <h4 className="text-sm font-semibold text-silver">With ProdPlex</h4>
           </div>
           
           <div className="space-y-3">
