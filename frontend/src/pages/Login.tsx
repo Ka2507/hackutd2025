@@ -208,11 +208,26 @@ export const Login: React.FC = () => {
               onClick={handleOutlookLogin}
               className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-dark-border rounded-lg bg-dark-lighter hover:bg-dark-border transition-colors text-gray-300"
             >
-              <svg className="w-5 h-5" viewBox="0 0 48 48" fill="none">
-                <rect width="48" height="48" rx="4" fill="#0078D4"/>
-                <path d="M24 14C27.866 14 31 17.134 31 21C31 24.866 27.866 28 24 28C20.134 28 17 24.866 17 21C17 17.134 20.134 14 24 14Z" fill="white"/>
-                <path d="M17 30C17 30 17 31.5 19.5 33.5C21 35 22.5 35.5 24 35.5C25.5 35.5 27 35 28.5 33.5C31 31.5 31 30 31 30L24 28L17 30Z" fill="white"/>
-                <rect x="8" y="8" width="32" height="32" rx="2" stroke="white" strokeWidth="1.5" fill="none"/>
+              <svg className="w-6 h-6" viewBox="0 0 48 48" fill="none">
+                {/* Main blue rounded square with O */}
+                <rect x="8" y="8" width="20" height="20" rx="3" fill="#0078D4"/>
+                <text x="18" y="22" fontSize="14" fontWeight="bold" fill="white" textAnchor="middle">O</text>
+                
+                {/* Envelope/Calendar background - darker blue bar */}
+                <rect x="20" y="12" width="20" height="3" rx="0.5" fill="#003D7A"/>
+                
+                {/* Grid pattern (calendar) */}
+                <rect x="20" y="16" width="4" height="4" rx="0.5" fill="#005A9E"/>
+                <rect x="25" y="16" width="4" height="4" rx="0.5" fill="#005A9E"/>
+                <rect x="30" y="16" width="4" height="4" rx="0.5" fill="#41A5EE"/>
+                <rect x="35" y="16" width="4" height="4" rx="0.5" fill="#41A5EE"/>
+                
+                {/* Envelope body */}
+                <rect x="20" y="21" width="19" height="12" rx="1" fill="#0078D4"/>
+                
+                {/* Envelope flap (open) - V shape */}
+                <path d="M 20 21 L 29.5 27 L 39 21" stroke="#003D7A" strokeWidth="2" fill="none"/>
+                <path d="M 20 21 L 29.5 26 L 39 21 L 39 23 L 29.5 28 L 20 23 Z" fill="#005A9E"/>
               </svg>
               <span>Sign in with Outlook</span>
             </button>
