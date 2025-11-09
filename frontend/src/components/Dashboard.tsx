@@ -17,6 +17,9 @@ import AgentChatModal from './AgentChatModal';
 import JiraIntegration from './JiraIntegration';
 import IntegrationStatus from './IntegrationStatus';
 import PRDSelectionModal from './PRDSelectionModal';
+import DetailedPRDModal from './DetailedPRDModal';
+import QuickPRDModal from './QuickPRDModal';
+import PRDViewer from './PRDViewer';
 import WorkflowTemplateModal from './WorkflowTemplateModal';
 import { FileText, X, CheckCircle, AlertTriangle, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +32,10 @@ export const Dashboard: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState<{key: string, name: string, description: string} | null>(null);
   const [showJiraIntegration, setShowJiraIntegration] = useState(false);
   const [showPRDSelection, setShowPRDSelection] = useState(false);
+  const [showDetailedPRD, setShowDetailedPRD] = useState(false);
+  const [showQuickPRD, setShowQuickPRD] = useState(false);
+  const [showPRDViewer, setShowPRDViewer] = useState(false);
+  const [prdData, setPrdData] = useState<any>(null);
   const [selectedDemo, setSelectedDemo] = useState<any>(null);
   const [demoResults, setDemoResults] = useState<any>(null);
   const [loadingDemo, setLoadingDemo] = useState(false);
@@ -47,6 +54,23 @@ export const Dashboard: React.FC = () => {
     }).catch(console.error);
   }, []);
 
+
+  const handleSelectDetailed = () => {
+    setShowPRDSelection(false);
+    setShowDetailedPRD(true);
+  };
+
+  const handleSelectQuick = () => {
+    setShowPRDSelection(false);
+    setShowQuickPRD(true);
+  };
+
+  const handlePRDComplete = (data: any) => {
+    setPrdData(data);
+    setShowDetailedPRD(false);
+    setShowQuickPRD(false);
+    setShowPRDViewer(true);
+  };
 
   const handleRunDemo = async (scenario: any) => {
     setSelectedDemo(scenario);
@@ -323,22 +347,26 @@ export const Dashboard: React.FC = () => {
           <div className="space-y-4">
             <WorkflowVisualization
               agents={Object.entries(agents).map(([key, agent]) => {
-                // Dynamically calculate relevance based on agent activity
+                // Dynamically calculate relevance based on agent activity and importance to PRD
                 const defaultRelevance: Record<string, number> = {
-                  'Strategy': 0.95,
-                  'Research': 0.90,
-                  'Risk': 0.75,
-                  'Development': 0.88,
-                  'Prioritization': 0.82,
-                  'Prototype': 0.78,
-                  'GTM': 0.80,
-                  'Automation': 0.70,
-                  'Regulation': 0.72,
+                  'StrategyAgent': 0.95,
+                  'ResearchAgent': 0.90,
+                  'DevelopmentAgent': 0.88,
+                  'PrioritizationAgent': 0.82,
+                  'GTMAgent': 0.80,
+                  'PrototypeAgent': 0.78,
+                  'RiskAssessmentAgent': 0.75,
+                  'RegulationAgent': 0.72,
+                  'AutomationAgent': 0.70,
                 };
                 
-                // Use actual quality score if available, otherwise use relevance
+                // Get relevance score for this agent
                 const relevanceScore = defaultRelevance[agent.name] || 0.75;
-                const actualScore = (agent as any).quality_score || relevanceScore;
+                
+                // Use actual quality score if available, otherwise use relevance
+                const actualScore = (agent as any).quality_score !== undefined 
+                  ? (agent as any).quality_score 
+                  : relevanceScore;
                 
                 return {
                   name: agent.name,
@@ -438,6 +466,29 @@ export const Dashboard: React.FC = () => {
       <PRDSelectionModal
         isOpen={showPRDSelection}
         onClose={() => setShowPRDSelection(false)}
+        onSelectDetailed={handleSelectDetailed}
+        onSelectQuick={handleSelectQuick}
+      />
+
+      {/* Detailed PRD Modal */}
+      <DetailedPRDModal
+        isOpen={showDetailedPRD}
+        onClose={() => setShowDetailedPRD(false)}
+        onComplete={handlePRDComplete}
+      />
+
+      {/* Quick PRD Modal */}
+      <QuickPRDModal
+        isOpen={showQuickPRD}
+        onClose={() => setShowQuickPRD(false)}
+        onComplete={handlePRDComplete}
+      />
+
+      {/* PRD Viewer */}
+      <PRDViewer
+        isOpen={showPRDViewer}
+        onClose={() => setShowPRDViewer(false)}
+        prdData={prdData}
       />
 
       {/* Workflow Template Modal */}

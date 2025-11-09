@@ -123,25 +123,27 @@ export const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
   onNodeClick,
 }) => {
   const { nodes, edges } = useMemo(() => {
-    // Define the standard workflow order
+    // Define the standard workflow order (matches agent names from backend)
     const workflowOrder = [
-      'Strategy',
-      'Research', 
-      'Risk',
-      'Development',
-      'Prioritization',
-      'Prototype',
-      'GTM',
-      'Automation',
-      'Regulation'
+      'StrategyAgent',
+      'ResearchAgent', 
+      'RiskAssessmentAgent',
+      'DevelopmentAgent',
+      'PrioritizationAgent',
+      'PrototypeAgent',
+      'GTMAgent',
+      'AutomationAgent',
+      'RegulationAgent'
     ];
     
     // Sort agents by workflow order
     const sortedAgents = [...agents].sort((a, b) => {
-      const indexA = workflowOrder.findIndex(name => a.name.toLowerCase().includes(name.toLowerCase()));
-      const indexB = workflowOrder.findIndex(name => b.name.toLowerCase().includes(name.toLowerCase()));
+      const indexA = workflowOrder.indexOf(a.name);
+      const indexB = workflowOrder.indexOf(b.name);
       return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
     });
+    
+    console.log('Sorted agents:', sortedAgents.map(a => `${a.name}: ${a.quality_score}`));
     
     // Create circular/flow layout
     const centerX = 400;
