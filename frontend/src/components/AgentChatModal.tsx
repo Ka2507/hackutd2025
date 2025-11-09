@@ -82,17 +82,21 @@ export const AgentChatModal: React.FC<AgentChatModalProps> = ({
         }
       );
 
+      // Parse the nested response structure
+      const resultData = response.result?.result || {};
+      const aiResponse = resultData.response || 'I apologize, but I encountered an issue processing your request.';
+      
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.output?.data?.response || response.output?.result || 'I apologize, but I encountered an issue processing your request.',
+        content: aiResponse,
         timestamp: new Date(),
-        cost: response.output?.cost,
-        model: response.output?.model
+        cost: resultData.cost,
+        model: resultData.model
       };
 
       // Update total cost
-      if (response.output?.cost) {
-        setTotalCost(prev => prev + response.output.cost);
+      if (resultData.cost) {
+        setTotalCost(prev => prev + resultData.cost);
       }
 
       setMessages(prev => [...prev, assistantMessage]);
