@@ -9,6 +9,7 @@ from .automation_agent import AutomationAgent
 from .regulation_agent import RegulationAgent
 from .prioritization_agent import PrioritizationAgent
 from .risk_assessment_agent import RiskAssessmentAgent
+from .prd_agent import PRDAgent
 
 __all__ = [
     'BaseAgent',
@@ -20,6 +21,7 @@ __all__ = [
     'AutomationAgent',
     'RegulationAgent',
     'PrioritizationAgent',
-    'RiskAssessmentAgent'
+    'RiskAssessmentAgent',
+    'PRDAgent'
 ]
 

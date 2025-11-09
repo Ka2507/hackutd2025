@@ -385,6 +385,50 @@ async def get_workflow_history(limit: int = 10):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/v1/generate_prd")
+async def generate_prd(workflow_id: str = None, project_id: int = None):
+    """
+    Generate PRD from completed workflow results.
+    
+    This endpoint can be called after running a full_feature_planning
+    workflow to generate a comprehensive PRD document.
+    """
+    try:
+        # For demo, we'll generate from the last workflow
+        # In production, fetch specific workflow by ID
+        
+        # Get latest workflow from history
+        history = task_graph.get_workflow_history(limit=1)
+        if not history:
+            raise HTTPException(
+                status_code=404,
+                detail="No workflow found to generate PRD from"
+            )
+        
+        # Execute PRD agent with mock workflow results
+        prd_agent = task_graph.agents["prd"]
+        prd_result = await prd_agent.execute({
+            "workflow_results": {
+                "steps": [],
+                "workflow": "full_feature_planning"
+            },
+            "product_name": "Sample Product",
+            "version": "1.0"
+        })
+        
+        return {
+            "success": True,
+            "prd": prd_result.get("result", {}),
+            "markdown": prd_result.get("result", {}).get("markdown", "")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating PRD: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # Conversation Management
 
 @app.post("/api/v1/conversations")

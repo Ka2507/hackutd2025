@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from agents import (
     StrategyAgent, ResearchAgent, DevAgent, PrototypeAgent,
     GtmAgent, AutomationAgent, RegulationAgent,
-    PrioritizationAgent, RiskAssessmentAgent
+    PrioritizationAgent, RiskAssessmentAgent, PRDAgent
 )
 from .memory_manager import memory_manager
 from .nemotron_bridge import nemotron_bridge
@@ -48,7 +48,8 @@ class TaskGraph:
             "automation": AutomationAgent(self.shared_context),
             "regulation": RegulationAgent(self.shared_context),
             "prioritization": PrioritizationAgent(self.shared_context),
-            "risk_assessment": RiskAssessmentAgent(self.shared_context)
+            "risk_assessment": RiskAssessmentAgent(self.shared_context),
+            "prd": PRDAgent(self.shared_context)
         }
         self.workflow_history = []
         logger.info("TaskGraph initialized with all agents")
@@ -121,12 +122,14 @@ class TaskGraph:
         project_id: Optional[int]
     ) -> Dict[str, Any]:
         """
-        Full feature planning workflow:
-        Strategy → Research → Dev → Prototype → GTM → Automation → Regulation
+        Full feature planning workflow with PRD generation.
+        
+        Lifecycle: Strategy → Research → Prioritization → Dev → 
+        Prototype → GTM → Automation → Regulation → Risk → PRD
         """
         results = {"workflow": "full_feature_planning", "steps": []}
         
-        # Step 1: Strategy Agent - Market analysis and idea generation
+        # Step 1: Strategy Agent
         logger.info("Step 1: Strategy Agent")
         strategy_result = await self.agents["strategy"].execute({
             "task_type": "idea_generation",
@@ -135,7 +138,7 @@ class TaskGraph:
         })
         results["steps"].append(strategy_result)
         
-        # Step 2: Research Agent - User research and competitive analysis
+        # Step 2: Research Agent
         logger.info("Step 2: Research Agent")
         research_result = await self.agents["research"].execute({
             "task_type": "user_research",
@@ -144,8 +147,17 @@ class TaskGraph:
         })
         results["steps"].append(research_result)
         
-        # Step 3: Dev Agent - Generate user stories and backlog
-        logger.info("Step 3: Dev Agent")
+        # Step 3: Prioritization Agent
+        logger.info("Step 3: Prioritization Agent")
+        prioritization_result = await self.agents["prioritization"].execute({
+            "task_type": "prioritize",
+            "features": input_data.get("features", []),
+            "context": {"strategy": strategy_result, "research": research_result}
+        })
+        results["steps"].append(prioritization_result)
+        
+        # Step 4: Dev Agent
+        logger.info("Step 4: Dev Agent")
         dev_result = await self.agents["dev"].execute({
             "task_type": "user_stories",
             "feature": input_data.get("feature", ""),
@@ -153,8 +165,8 @@ class TaskGraph:
         })
         results["steps"].append(dev_result)
         
-        # Step 4: Prototype Agent - Create mockups
-        logger.info("Step 4: Prototype Agent")
+        # Step 5: Prototype Agent
+        logger.info("Step 5: Prototype Agent")
         prototype_result = await self.agents["prototype"].execute({
             "task_type": "mockup",
             "feature": input_data.get("feature", ""),
@@ -162,8 +174,8 @@ class TaskGraph:
         })
         results["steps"].append(prototype_result)
         
-        # Step 5: GTM Agent - Launch planning
-        logger.info("Step 5: GTM Agent")
+        # Step 6: GTM Agent
+        logger.info("Step 6: GTM Agent")
         gtm_result = await self.agents["gtm"].execute({
             "task_type": "launch_plan",
             "product": input_data.get("feature", ""),
@@ -171,22 +183,41 @@ class TaskGraph:
         })
         results["steps"].append(gtm_result)
         
-        # Step 6: Automation Agent - Setup automation
-        logger.info("Step 6: Automation Agent")
+        # Step 7: Automation Agent
+        logger.info("Step 7: Automation Agent")
         automation_result = await self.agents["automation"].execute({
             "task_type": "workflow_automation",
             "automation_config": {"feature": input_data.get("feature", "")}
         })
         results["steps"].append(automation_result)
         
-        # Step 7: Regulation Agent - Compliance check
-        logger.info("Step 7: Regulation Agent")
+        # Step 8: Regulation Agent
+        logger.info("Step 8: Regulation Agent")
         regulation_result = await self.agents["regulation"].execute({
             "task_type": "compliance_check",
             "feature": input_data.get("feature", ""),
             "jurisdiction": input_data.get("jurisdiction", "US")
         })
         results["steps"].append(regulation_result)
+        
+        # Step 9: Risk Assessment Agent
+        logger.info("Step 9: Risk Assessment Agent")
+        risk_result = await self.agents["risk_assessment"].execute({
+            "task_type": "assess",
+            "project_data": {"feature": input_data.get("feature", "")},
+            "context": results
+        })
+        results["steps"].append(risk_result)
+        
+        # Step 10: PRD Agent - Synthesize everything into PRD
+        logger.info("Step 10: PRD Agent - Generating final document")
+        prd_result = await self.agents["prd"].execute({
+            "workflow_results": results,
+            "product_name": input_data.get("feature", "New Product"),
+            "version": input_data.get("version", "1.0")
+        })
+        results["steps"].append(prd_result)
+        results["prd"] = prd_result.get("result", {})
         
         # Generate summary
         results["summary"] = self._generate_workflow_summary(results["steps"])
