@@ -15,7 +15,6 @@ interface BeforeAfterProps {
 export const BeforeAfter: React.FC<BeforeAfterProps> = ({
   timeSaved = 8.5,
   qualityImprovement = 35,
-  itemsGenerated = 23,
   traditionalCount = 8,
   automatedCount = 23,
 }) => {

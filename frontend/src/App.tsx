@@ -2,7 +2,6 @@
  * Main App Component
  */
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import ProjectDashboard from './pages/ProjectDashboard';
@@ -16,14 +15,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    // Check auth status on mount
-    const authStatus = localStorage.getItem('isAuthenticated') === 'true';
-    setIsAuthenticated(authStatus);
-  }, []);
-
   return (
     <Router>
       <Routes>

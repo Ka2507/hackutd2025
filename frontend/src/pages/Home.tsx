@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Zap, Shield, Bot, ArrowRight, Cpu, Network, TrendingUp, LogOut, FileText } from 'lucide-react';
+import { Sparkles, Bot, ArrowRight, TrendingUp, LogOut, FileText } from 'lucide-react';
 import PRDSelectionModal from '../components/PRDSelectionModal';
 import DetailedPRDModal from '../components/DetailedPRDModal';
 import QuickPRDModal from '../components/QuickPRDModal';
@@ -37,29 +37,6 @@ export const Home: React.FC = () => {
     setShowPRDSelection(false);
     setShowQuickPRD(true);
   };
-
-  const features = [
-    {
-      icon: Cpu,
-      title: 'Multi-Agent AI',
-      description: '9 specialized agents powered by NVIDIA Nemotron for strategic reasoning',
-    },
-    {
-      icon: Zap,
-      title: 'Automated Workflows',
-      description: 'Streamline repetitive PM tasks and focus on high-impact decisions',
-    },
-    {
-      icon: Shield,
-      title: 'Privacy First',
-      description: 'Local LLM processing with optional cloud reasoning for sensitive data',
-    },
-    {
-      icon: Network,
-      title: 'Intelligent Orchestration',
-      description: 'Coordinated multi-agent system with shared memory and context',
-    },
-  ];
 
   const agents = [
     { name: 'Strategy', description: 'Market analysis & competitive intelligence' },

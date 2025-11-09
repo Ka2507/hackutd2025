@@ -9,11 +9,8 @@ import ReactFlow, {
   Controls,
   MiniMap,
   NodeTypes,
-  Handle,
-  Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2, AlertCircle, Brain, ArrowRight } from 'lucide-react';
 
 interface AgentNode {
@@ -128,8 +125,6 @@ export const WorkflowVisualization: React.FC<WorkflowVisualizationProps> = ({
   const { nodes, edges } = useMemo(() => {
     // Calculate positions in a grid layout
     const cols = Math.ceil(Math.sqrt(agents.length));
-    const nodeWidth = 200;
-    const nodeHeight = 150;
     const spacing = 250;
     
     const nodes: Node[] = agents.map((agent, index) => {

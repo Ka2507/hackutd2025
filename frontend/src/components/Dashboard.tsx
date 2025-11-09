@@ -303,7 +303,7 @@ export const Dashboard: React.FC = () => {
         {activeTab === 'visualization' && (
           <div className="space-y-4">
             <WorkflowVisualization
-              agents={Object.entries(agents).map(([key, agent]) => ({
+              agents={Object.entries(agents).map(([_key, agent]) => ({
                 name: agent.name,
                 status: agent.status === 'running' ? 'working' : 
                        agent.status === 'completed' ? 'done' : 'idle',

@@ -1,7 +1,7 @@
 /**
  * Error Boundary - Catches and displays errors gracefully
  */
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 interface Props {

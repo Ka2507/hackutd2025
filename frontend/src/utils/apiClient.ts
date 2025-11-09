@@ -171,6 +171,23 @@ class APIClient {
     return response.data;
   }
 
+  // PRD Generation
+  async generatePRD(workflowId: string) {
+    const response = await this.client.post(`/api/v1/prd/generate`, {
+      workflow_id: workflowId,
+    });
+    return response.data;
+  }
+
+  // Agent Refinement
+  async refineAgentOutput(agentName: string, originalOutput: any, feedback: string) {
+    const response = await this.client.post(`/api/v1/agents/${agentName}/refine`, {
+      original_output: originalOutput,
+      feedback,
+    });
+    return response.data;
+  }
+
   // WebSocket
   connectWebSocket(onMessage: (data: any) => void) {
     const wsUrl = API_BASE_URL.replace('http', 'ws') + '/ws/agents';
